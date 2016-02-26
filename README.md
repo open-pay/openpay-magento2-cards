@@ -11,8 +11,7 @@ Install
 
 2. Enter following commands to install module:
 
-    ```bash
-    composer config repositories.openpaymagento git https://github.com/fedebalderas/openpay-magento2.git
+    ```bash    
     composer require openpay/magento2
     ```
    Wait while dependencies are updated.
@@ -22,6 +21,7 @@ Install
     ```bash
     php bin/magento module:enable Openpay_Cards --clear-static-content
     php bin/magento setup:upgrade
+    php bin/magento cache:clean
     ```
 
 4. Enable and configure Openpay in Magento Admin under Stores/Configuration/Payment Methods/Openpay
