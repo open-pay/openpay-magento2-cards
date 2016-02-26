@@ -7,6 +7,7 @@ namespace OpenpayMagento\Cards\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
+use OpenpayMagento\Cards\Model\Payment as OpenpayPayment;
 
 
 class OpenpayConfigProvider implements ConfigProviderInterface
@@ -22,27 +23,33 @@ class OpenpayConfigProvider implements ConfigProviderInterface
      * @var \Magento\Payment\Model\Method\AbstractMethod[]
      */
     protected $methods = [];
-
+    
     /**
-     * @param PaymentHelper $paymentHelper     
+     * @var \OpenpayMagento\Cards\Model\Payment
      */
-    public function __construct(
-        PaymentHelper $paymentHelper       
-    ) {        
+    protected $payment ;
+
+    /**     
+     * @param PaymentHelper $paymentHelper
+     * @param OpenpayPayment $payment
+     */
+    public function __construct(PaymentHelper $paymentHelper, OpenpayPayment $payment) {        
         foreach ($this->methodCodes as $code) {
             $this->methods[$code] = $paymentHelper->getMethodInstance($code);
         }
+        
+        $this->payment = $payment;
     }
 
     /**
      * {@inheritdoc}
      */
     public function getConfig()
-    {
+    {        
         $config = [];
         foreach ($this->methodCodes as $code) {
             if ($this->methods[$code]->isAvailable()) {
-                $config['payment']['openpay_credentials'] = array("merchant_id" => "mylel40vq1oduhelfuct", "public_key" => "pk_b05ccb9c1b454794875f46eb975ea13b");                 
+                $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSanbox());                 
                 $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard"); 
                 $config['payment']['ccform']["hasVerification"][$code] = true;
                 $config['payment']['ccform']["hasSsCardType"][$code] = false;
@@ -56,6 +63,9 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         return $config;
     }
     
+    /**     
+     * @return array
+     */
     public function getMonths(){
         return array(
             "1" => "01 - Enero",
@@ -73,6 +83,9 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         );
     }
     
+    /**     
+     * @return array
+     */
     public function getYears(){
         $years = array();
         for($i=1; $i<=10; $i++){
@@ -82,6 +95,9 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         return $years;
     }
     
+    /**     
+     * @return array
+     */
     public function getStartYears(){
         $years = array();
         for($i=5; $i>=0; $i--){

@@ -222,6 +222,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     /**     
+     * @return boolean
+     */
+    public function isSanbox(){
+        return $this->is_sandbox;
+    }
+    
+    /**     
      * @param Exception $e
      * @return string
      */

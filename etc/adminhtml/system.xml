@@ -14,7 +14,7 @@
     <system>
         <section id="payment">
             <group id="openpay_cards" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Openpay</label>
+                <label>Openpay (Credit-Debit card payment)</label>
                 <comment>
                     <![CDATA[<a href="http://openpay.mx/" target="_blank">Click here to sign up for Openpay account</a>]]>
                 </comment>

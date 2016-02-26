@@ -45,7 +45,7 @@ define(
                                         
                     OpenPay.setId(window.checkoutConfig.payment.openpay_credentials.merchant_id);
                     OpenPay.setApiKey(window.checkoutConfig.payment.openpay_credentials.public_key);
-                    OpenPay.setSandboxMode(true);
+                    OpenPay.setSandboxMode(window.checkoutConfig.payment.openpay_credentials.is_sandbox);
 
                     //antifraudes
                     OpenPay.deviceData.setup(this.getCode() + '-form', "device_session_id");
