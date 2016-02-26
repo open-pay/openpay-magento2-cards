@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Openpay_Cards admin configuration
+ *
+ * @category    Openpay
+ * @package     Openpay_Cards
+ * @author      Federico Balderas
+ * @copyright   Openpay (http://openpay.mx)
+ * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="openpay_cards" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Openpay</label>
+                <comment>
+                    <![CDATA[<a href="http://openpay.mx/" target="_blank">Click here to sign up for Openpay account</a>]]>
+                </comment>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="is_sandbox" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sandbox</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="sandbox_merchant_id" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sandbox Merchant ID</label>                    
+                </field>
+                <field id="sandbox_sk" translate="label" type="obscure" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sandbox Secret Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="sandbox_pk" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sandbox Public Key</label>                    
+                </field>
+                <field id="live_merchant_id" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Production Merchant ID</label>                    
+                </field>
+                <field id="live_sk" translate="label" type="obscure" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Production Secret Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="live_pk" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Production Public Key</label>                    
+                </field>   
+                <field id="cctypes" translate="label" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Types</label>
+                    <source_model>OpenpayMagento\Cards\Model\Source\Cctype</source_model>
+                </field>   
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment from Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                </field>          
+                <field id="sort_order" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                </field>                
+            </group>
+        </section>
+    </system>
+</config>

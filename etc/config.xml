@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Openpay_Cards default configuration
+ *
+ * @category    Openpay
+ * @package     Openpay_Cards
+ * @author      Federico Balderas
+ * @copyright   Openpay (http://openpay.mx)
+ * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <openpay_cards>
+                <active>0</active>
+                <model>OpenpayMagento\Cards\Model\Payment</model>
+                <payment_action>authorize_capture</payment_action>
+                <title>Openpay</title>
+                <sandbox_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />                
+                <live_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />     
+                <cctypes>AE,VI,MC</cctypes>
+                <allowspecific>0</allowspecific>                                     
+            </openpay_cards>
+        </payment>
+    </default>
+</config>
