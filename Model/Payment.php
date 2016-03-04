@@ -114,6 +114,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
 
         try {
+            
+            unset($_SESSION['pdf_url']);
 
             $customer_data = array(
                 'name' => $billing->getFirstname(),
