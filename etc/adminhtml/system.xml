@@ -14,7 +14,7 @@
     <system>
         <section id="payment">
             <group id="openpay_cards" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Openpay (Credit-Debit card payment)</label>
+                <label>Openpay (Card payment)</label>
                 <comment>
                     <![CDATA[<a href="http://openpay.mx/" target="_blank">Click here to sign up for Openpay account</a>]]>
                 </comment>
@@ -51,7 +51,7 @@
                 </field>   
                 <field id="cctypes" translate="label" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Credit Card Types</label>
-                    <source_model>OpenpayMagento\Cards\Model\Source\Cctype</source_model>
+                    <source_model>Openpay\Cards\Model\Source\Cctype</source_model>
                 </field>   
                 <field id="allowspecific" translate="label" type="allowspecific" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
@@ -60,10 +60,7 @@
                 <field id="specificcountry" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
-                </field>          
-                <field id="sort_order" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Sort Order</label>
-                </field>                
+                </field>                          
             </group>
         </section>
     </system>

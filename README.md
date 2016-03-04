@@ -1,4 +1,4 @@
-Openpay-Magento2-Cards
+Openpay-Magento2
 ======================
 
 Openpay payment gateway Magento2 extension
@@ -7,12 +7,12 @@ Openpay payment gateway Magento2 extension
 Install
 =======
 
-1. Go to Magento2 root folder.
+1. Go to Magento2 root folder
 
 2. Enter following commands to install module:
 
     ```bash    
-    composer require openpay/magento2-cards
+    composer require openpay/magento2
     ```
    Wait while dependencies are updated.
 
@@ -24,6 +24,6 @@ Install
     php bin/magento cache:clean
     ```
 
-4. Enable and configure Openpay in Magento Admin under Stores/Configuration/Payment Methods/Openpay
+4. Enable and configure Openpay in Magento Admin under Stores > Configuration > Sales > Payment Methods > Openpay
 
 

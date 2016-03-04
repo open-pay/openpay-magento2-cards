@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Openpay_Cards payment method model
  *
@@ -9,36 +10,32 @@
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
 
-namespace OpenpayMagento\Cards\Model;
+namespace Openpay\Cards\Model;
 
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
+
     const CODE = 'openpay_cards';
 
     protected $_code = self::CODE;
-
     protected $_isGateway = true;
     protected $_canCapture = true;
     protected $_canCapturePartial = true;
     protected $_canRefund = false;
     protected $_canRefundInvoicePartial = false;
-    
     protected $openpay = false;
     protected $is_sandbox;
     protected $merchant_id = null;
     protected $pk = null;
-    protected $sk = null;        
-    
+    protected $sk = null;
     protected $sandbox_merchant_id;
     protected $sandbox_sk;
     protected $sandbox_pk;
     protected $live_merchant_id;
     protected $live_sk;
     protected $live_pk;
-
-    protected $country_factory;    
+    protected $country_factory;
     protected $supported_currency_codes = array('USD', 'MXN');
-    
 
     /**
      * 
@@ -56,36 +53,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
-        \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
-        \Magento\Payment\Helper\Data $paymentData,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Payment\Model\Method\Logger $logger,
-        \Magento\Framework\Module\ModuleListInterface $moduleList,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-        \Magento\Directory\Model\CountryFactory $countryFactory,
-        \Openpay $openpay,
-        array $data = array()
+    \Magento\Framework\Model\Context $context, \Magento\Framework\Registry $registry, \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory, \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory, \Magento\Payment\Helper\Data $paymentData, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig, \Magento\Payment\Model\Method\Logger $logger, \Magento\Framework\Module\ModuleListInterface $moduleList, \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate, \Magento\Directory\Model\CountryFactory $countryFactory, \Openpay $openpay, array $data = array()
     ) {
         parent::__construct(
-            $context,
-            $registry,
-            $extensionFactory,
-            $customAttributeFactory,
-            $paymentData,
-            $scopeConfig,
-            $logger,
-            $moduleList,
-            $localeDate,
-            null,
-            null,
-            $data
+                $context, $registry, $extensionFactory, $customAttributeFactory, $paymentData, $scopeConfig, $logger, $moduleList, $localeDate, null, null, $data
         );
 
         $this->country_factory = $countryFactory;
-        
+
         $this->is_active = $this->getConfigData('active');
         $this->is_sandbox = $this->getConfigData('is_sandbox');
         $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
@@ -98,10 +73,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
-        
+
         $this->openpay = $openpay;
     }
-    
+
     /**
      * Assign corresponding data
      *
@@ -111,9 +86,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function assignData(\Magento\Framework\DataObject $data) {
         parent::assignData($data);
-        $infoInstance = $this->getInfoInstance();          
-        $infoInstance->setAdditionalInformation('device_session_id', $data->getData('device_session_id'));                
-        $infoInstance->setAdditionalInformation('openpay_token', $data->getData('openpay_token'));        
+        $infoInstance = $this->getInfoInstance();
+        $infoInstance->setAdditionalInformation('device_session_id', $data->getData('device_session_id'));
+        $infoInstance->setAdditionalInformation('openpay_token', $data->getData('openpay_token'));
         return $this;
     }
 
@@ -125,30 +100,29 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return $this
      * @throws \Magento\Framework\Validator\Exception
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
+
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
         /** @var \Magento\Sales\Model\Order\Address $billing */
         $billing = $order->getBillingAddress();
-        
-        if(!$this->getInfoInstance()->getAdditionalInformation('openpay_token')){
+
+        if (!$this->getInfoInstance()->getAdditionalInformation('openpay_token')) {
             $msg = 'ERROR X100 Please specify card info';
             throw new \Magento\Framework\Validator\Exception(__($msg));
         }
 
         try {
-            
+
             $customer_data = array(
                 'name' => $billing->getFirstname(),
                 'last_name' => $billing->getLastname(),
                 'phone_number' => $billing->getTelephone(),
                 'email' => $order->getCustomerEmail()
             );
-            
-            if($this->validateAddress($billing)){
+
+            if ($this->validateAddress($billing)) {
                 $customer_data['address'] = array(
                     'line1' => $billing->getStreetLine(1),
                     'line2' => $billing->getStreetLine(2),
@@ -158,25 +132,25 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                     'country_code' => $billing->getCountryId()
                 );
             }
-            
+
             $charge_request = array(
                 'method' => 'card',
                 'currency' => strtolower($order->getBaseCurrencyCode()),
                 'amount' => $amount,
                 'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),
+                'order_id' => $order->getIncrementId(),
                 'source_id' => $this->getInfoInstance()->getAdditionalInformation('openpay_token'),
                 'device_session_id' => $this->getInfoInstance()->getAdditionalInformation('device_session_id'),
                 'customer' => $customer_data
             );
-            
+
             $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
             \Openpay::setSandboxMode($this->is_sandbox);
-            $charge = $openpay->charges->create($charge_request);                        
+            $charge = $openpay->charges->create($charge_request);
             $payment->setTransactionId($charge->id)->setIsTransactionClosed(0);
-
         } catch (\Exception $e) {
             $this->debugData(['request' => $charge_request, 'exception' => $e->getMessage()]);
-            $this->_logger->error(__('Payment capturing error.'));            
+            $this->_logger->error(__('Payment capturing error.'));
             throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
         }
 
@@ -199,41 +173,39 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param string $currencyCode
      * @return bool
      */
-    public function canUseForCurrency($currencyCode)
-    {
+    public function canUseForCurrency($currencyCode) {
         if (!in_array($currencyCode, $this->supported_currency_codes)) {
             return false;
         }
         return true;
     }
-    
-    /**     
+
+    /**
      * @return string
      */
-    public function getMerchantId(){
+    public function getMerchantId() {
         return $this->merchant_id;
     }
-    
-    /**     
+
+    /**
      * @return string
      */
-    public function getPublicKey(){
+    public function getPublicKey() {
         return $this->pk;
     }
-    
-    /**     
+
+    /**
      * @return boolean
      */
-    public function isSanbox(){
+    public function isSanbox() {
         return $this->is_sandbox;
     }
-    
-    /**     
+
+    /**
      * @param Exception $e
      * @return string
      */
-    public function error($e)
-    {
+    public function error($e) {
         /* 6001 el webhook ya existe */
         switch ($e->getErrorCode()) {
             case '1000':
@@ -277,18 +249,18 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 break;
         }
 
-        return 'ERROR '.$e->getErrorCode().'. '.$msg;        
+        return 'ERROR '.$e->getErrorCode().'. '.$msg;
     }
-    
-    /**     
+
+    /**
      * @param Address $billing
      * @return boolean
      */
-    public function validateAddress($billing){        
-        if($billing->getStreetLine(1) && $billing->getCity() && $billing->getPostcode() && $billing->getRegion() && $billing->getCountryId()){
+    public function validateAddress($billing) {
+        if ($billing->getStreetLine(1) && $billing->getCity() && $billing->getPostcode() && $billing->getRegion() && $billing->getCountryId()) {
             return true;
         }
         return false;
     }
-        
+
 }

@@ -12,17 +12,17 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
-    <virtualType name="OpenpayMagento\Cards\Model\ConfigProvider" type="Magento\Payment\Model\CcGenericConfigProvider">
+    <virtualType name="Openpay\Cards\Model\ConfigProvider" type="Magento\Payment\Model\CcGenericConfigProvider">
         <arguments>
             <argument name="methodCodes" xsi:type="array">
-                <item name="openpay_cards" xsi:type="const">OpenpayMagento\Cards\Model\Payment::CODE</item>
+                <item name="openpay_cards" xsi:type="const">Openpay\Cards\Model\Payment::CODE</item>
             </argument>
         </arguments>
     </virtualType>    
     <type name="Magento\Checkout\Model\CompositeConfigProvider">
         <arguments>
             <argument name="configProviders" xsi:type="array">
-                <item name="openpay_cards_config_provider" xsi:type="object">OpenpayMagento\Cards\Model\OpenpayConfigProvider</item>
+                <item name="openpay_cards_config_provider" xsi:type="object">Openpay\Cards\Model\OpenpayConfigProvider</item>
             </argument>
         </arguments>
     </type>

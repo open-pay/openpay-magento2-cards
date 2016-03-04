@@ -3,11 +3,11 @@
  * Copyright © 2015 Pay.nl All rights reserved.
  */
 
-namespace OpenpayMagento\Cards\Model;
+namespace Openpay\Cards\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
-use OpenpayMagento\Cards\Model\Payment as OpenpayPayment;
+use Openpay\Cards\Model\Payment as OpenpayPayment;
 
 
 class OpenpayConfigProvider implements ConfigProviderInterface
@@ -25,7 +25,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
     protected $methods = [];
     
     /**
-     * @var \OpenpayMagento\Cards\Model\Payment
+     * @var \Openpay\Cards\Model\Payment
      */
     protected $payment ;
 
@@ -63,9 +63,6 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         return $config;
     }
     
-    /**     
-     * @return array
-     */
     public function getMonths(){
         return array(
             "1" => "01 - Enero",
@@ -83,9 +80,6 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         );
     }
     
-    /**     
-     * @return array
-     */
     public function getYears(){
         $years = array();
         for($i=1; $i<=10; $i++){
@@ -95,9 +89,6 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         return $years;
     }
     
-    /**     
-     * @return array
-     */
     public function getStartYears(){
         $years = array();
         for($i=5; $i>=0; $i--){
