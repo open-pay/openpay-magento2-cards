@@ -1,4 +1,4 @@
-Openpay-Magento2
+Openpay-Magento2-Cards
 ======================
 
 Openpay payment gateway Magento2 extension
