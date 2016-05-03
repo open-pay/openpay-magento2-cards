@@ -18,9 +18,6 @@ define(
     function (Component, $) {
         'use strict';
         
-        var customer = window.checkoutConfig.customerData;   
-        var customer_address = customer.addresses[0];
-
         return Component.extend({
             defaults: {
                 template: 'Openpay_Cards/payment/openpay-form'
@@ -66,6 +63,10 @@ define(
                     };
                                         
                     if(this.validateAddress()){
+                        
+                        var customer = window.checkoutConfig.customerData;   
+                        var customer_address = customer.addresses[0];
+                        
                         data["address"] = {
                             city: customer_address.city,
                             country_code: customer_address.country_id,
