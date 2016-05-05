@@ -18,6 +18,8 @@ define(
     function (Component, $) {
         'use strict';
         
+        var customer = window.checkoutConfig.customerData;   
+        
         return Component.extend({
             defaults: {
                 template: 'Openpay_Cards/payment/openpay-form'
@@ -46,7 +48,7 @@ define(
 
                     //antifraudes
                     OpenPay.deviceData.setup(this.getCode() + '-form', "device_session_id");
-
+                    
                     var year_full = $('#openpay_cards_expiration_yr').val();
                     var holder_name = customer.firstname+" "+customer.lastname;
                     var card = $('#openpay_cards_cc_number').val();
@@ -63,10 +65,8 @@ define(
                     };
                                         
                     if(this.validateAddress()){
-                        
-                        var customer = window.checkoutConfig.customerData;   
-                        var customer_address = customer.addresses[0];
-                        
+                                                
+                        var customer_address = customer.addresses[0];                        
                         data["address"] = {
                             city: customer_address.city,
                             country_code: customer_address.country_id,
