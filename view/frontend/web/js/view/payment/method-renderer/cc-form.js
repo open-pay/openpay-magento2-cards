@@ -143,7 +143,7 @@ define(
                     state: customerData.region,
                     line1: customerData.street[0],
                     line2: customerData.street[1]
-                }
+                };
 
                 return address;
             }

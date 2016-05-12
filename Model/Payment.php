@@ -106,8 +106,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $order = $payment->getOrder();
 
         /** @var \Magento\Sales\Model\Order\Address $billing */
-        $billing = $order->getBillingAddress();
-        //$billing = $order->getShippingAddress();
+        $billing = $order->getBillingAddress();        
 
         if (!$this->getInfoInstance()->getAdditionalInformation('openpay_token')) {
             $msg = 'ERROR X100 Please specify card info';
