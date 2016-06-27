@@ -30,6 +30,22 @@
         <form class="form" data-bind="attr: {'id': getCode() + '-form'}">    
             <input type="hidden" id="openpay_token" name="openpay_token" value="" />
             <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
+            
+            <div class="fieldset">                
+                <div class="field type">
+                    <label class="label" for="openpay_cards_interest_free" style="font-weight: 600; margin-bottom: 5px;">Meses sin intereses</label>
+                    <div class="control">
+                        <select id="interest_free" name="interest_free" class="select" style="width: auto;" data-bind="options: getMonthsInterestFree(), 
+                       optionsText: function(month) {
+                           return month+' meses';
+                       }"></select>
+                    </div>                    
+                </div>     
+                <div id="total-monthly-payment" class="field type" style="display: none;">
+                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>                
+                    <p class="openpay-total" style="font-size: 2em; font-weight: bold;">$<span id="monthly-payment">100</span></p>
+                </div>                
+            </div>    
         </form>
 
         <div class="checkout-agreements-block">

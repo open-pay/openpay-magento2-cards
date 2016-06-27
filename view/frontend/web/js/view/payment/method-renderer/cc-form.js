@@ -19,8 +19,29 @@ define(
     ],
     function (Component, $, quote, customer) {
         'use strict';
+
+        //console.log(window.checkoutConfig.customerData);
+        //console.log(customer.customerData);
+        //console.log(quote.billingAddress._latestValue);
+        var customerData = quote.billingAddress._latestValue;  
+        var total = window.checkoutConfig.payment.total;
+        console.log(customerData);
         
-        var customerData = quote.billingAddress._latestValue;        
+        $(document).on("change", "#interest_free", function() {        
+            var monthly_payment = 0;
+            var months = parseInt($(this).val());     
+
+            if (months > 1) {
+                $("#total-monthly-payment").css("display", "inline");
+            } else {
+                $("#total-monthly-payment").css("display", "none");
+            }
+
+            monthly_payment = total/months;
+            monthly_payment = monthly_payment.toFixed(2);            
+            
+            $("#monthly-payment").text(monthly_payment);
+        });
 
         return Component.extend({
 
@@ -35,6 +56,11 @@ define(
             isActive: function() {
                 return true;
             },
+            
+            getMonthsInterestFree: function() {
+                return window.checkoutConfig.payment.months_interest_free;                
+            },
+            
             /**
              * Prepare and process payment information
              */
@@ -75,7 +101,7 @@ define(
                         data,
                         function(response) {
                             var token_id = response.data.id;
-                            $("#openpay_token").val(token_id);
+                            $("#openpay_token").val(token_id);                            
                             //$form.append('<input type="hidden" id="openpay_token" name="openpay_token" value="' + token_id + '" />');
                             self.placeOrder();
                         },
@@ -104,6 +130,7 @@ define(
                         'cc_number': this.creditCardNumber(),
                         'openpay_token': $("#openpay_token").val(),
                         'device_session_id': $('#device_session_id').val(),
+                        'interest_free': $('#interest_free').val()
                     }
                 };
             },
@@ -143,9 +170,10 @@ define(
                     state: customerData.region,
                     line1: customerData.street[0],
                     line2: customerData.street[1]
-                };
+                }
 
                 return address;
+
             }
         });
     }

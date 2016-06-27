@@ -12,6 +12,17 @@
 
 namespace Openpay\Cards\Model;
 
+use Magento\Framework\Model\Context;
+use Magento\Framework\Registry;
+use Magento\Framework\Api\ExtensionAttributesFactory;
+use Magento\Framework\Api\AttributeValueFactory;
+use Magento\Payment\Helper\Data;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Payment\Model\Method\Logger;
+use Magento\Framework\Module\ModuleListInterface;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Directory\Model\CountryFactory;
+
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
 
@@ -35,7 +46,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $live_sk;
     protected $live_pk;
     protected $country_factory;
+    protected $scopeConfig;
     protected $supported_currency_codes = array('USD', 'MXN');
+    protected $minimum_amount;
+    protected $months_interest_free;
 
     /**
      * 
@@ -52,13 +66,25 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param \Openpay $openpay
      * @param array $data
      */
-    public function __construct(
-    \Magento\Framework\Model\Context $context, \Magento\Framework\Registry $registry, \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory, \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory, \Magento\Payment\Helper\Data $paymentData, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig, \Magento\Payment\Model\Method\Logger $logger, \Magento\Framework\Module\ModuleListInterface $moduleList, \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate, \Magento\Directory\Model\CountryFactory $countryFactory, \Openpay $openpay, array $data = array()
+    public function __construct(Context $context, 
+            Registry $registry, 
+            ExtensionAttributesFactory $extensionFactory, 
+            AttributeValueFactory $customAttributeFactory, 
+            Data $paymentData, 
+            ScopeConfigInterface $scopeConfig, 
+            Logger $logger,
+            ModuleListInterface $moduleList, 
+            TimezoneInterface $localeDate, 
+            CountryFactory $countryFactory, 
+            \Openpay $openpay, 
+            array $data = array()
     ) {
+        
         parent::__construct(
                 $context, $registry, $extensionFactory, $customAttributeFactory, $paymentData, $scopeConfig, $logger, $moduleList, $localeDate, null, null, $data
         );
 
+        $this->scopeConfig = $scopeConfig;
         $this->country_factory = $countryFactory;
 
         $this->is_active = $this->getConfigData('active');
@@ -73,6 +99,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
+        $this->months_interest_free = $this->getConfigData('interest_free');
+        $this->minimum_amount = $this->getConfigData('minimum_amount');
 
         $this->openpay = $openpay;
     }
@@ -89,6 +117,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance = $this->getInfoInstance();
         $infoInstance->setAdditionalInformation('device_session_id', $data->getData('device_session_id'));
         $infoInstance->setAdditionalInformation('openpay_token', $data->getData('openpay_token'));
+        $infoInstance->setAdditionalInformation('interest_free', $data->getData('interest_free'));
         return $this;
     }
 
@@ -106,7 +135,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $order = $payment->getOrder();
 
         /** @var \Magento\Sales\Model\Order\Address $billing */
-        $billing = $order->getBillingAddress();        
+        $billing = $order->getBillingAddress();
 
         if (!$this->getInfoInstance()->getAdditionalInformation('openpay_token')) {
             $msg = 'ERROR X100 Please specify card info';
@@ -116,7 +145,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         try {
             
             unset($_SESSION['pdf_url']);
-
+            
             $customer_data = array(
                 'name' => $billing->getFirstname(),
                 'last_name' => $billing->getLastname(),
@@ -139,12 +168,17 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 'method' => 'card',
                 'currency' => strtolower($order->getBaseCurrencyCode()),
                 'amount' => $amount,
-                'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),
+                'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),                
                 'order_id' => $order->getIncrementId(),
                 'source_id' => $this->getInfoInstance()->getAdditionalInformation('openpay_token'),
                 'device_session_id' => $this->getInfoInstance()->getAdditionalInformation('device_session_id'),
-                'customer' => $customer_data
+                'customer' => $customer_data                
             );
+            
+            $interest_free = $this->getInfoInstance()->getAdditionalInformation('interest_free');
+            if($interest_free > 1){
+                $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
+            }  
 
             $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
             \Openpay::setSandboxMode($this->is_sandbox);
@@ -201,6 +235,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function isSanbox() {
         return $this->is_sandbox;
+    }
+    
+    public function getMonthsInterestFree() {
+        $months = explode(',', $this->months_interest_free);                  
+        if(!in_array('1', $months)) {            
+            array_unshift($months, '1');
+        }        
+        return $months;
     }
 
     /**

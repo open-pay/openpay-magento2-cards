@@ -8,7 +8,7 @@ namespace Openpay\Cards\Model;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
-
+use Magento\Checkout\Model\Cart;
 
 class OpenpayConfigProvider implements ConfigProviderInterface
 {
@@ -29,15 +29,18 @@ class OpenpayConfigProvider implements ConfigProviderInterface
      */
     protected $payment ;
 
+    protected $cart;
+
+
     /**     
      * @param PaymentHelper $paymentHelper
      * @param OpenpayPayment $payment
      */
-    public function __construct(PaymentHelper $paymentHelper, OpenpayPayment $payment) {        
+    public function __construct(PaymentHelper $paymentHelper, OpenpayPayment $payment, Cart $cart) {        
         foreach ($this->methodCodes as $code) {
             $this->methods[$code] = $paymentHelper->getMethodInstance($code);
         }
-        
+        $this->cart = $cart;
         $this->payment = $payment;
     }
 
@@ -45,11 +48,13 @@ class OpenpayConfigProvider implements ConfigProviderInterface
      * {@inheritdoc}
      */
     public function getConfig()
-    {        
+    {                
         $config = [];
         foreach ($this->methodCodes as $code) {
             if ($this->methods[$code]->isAvailable()) {
                 $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSanbox());                 
+                $config['payment']['months_interest_free'] = $this->payment->getMonthsInterestFree();
+                $config['payment']['total'] = $this->cart->getQuote()->getGrandTotal();
                 $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard"); 
                 $config['payment']['ccform']["hasVerification"][$code] = true;
                 $config['payment']['ccform']["hasSsCardType"][$code] = false;

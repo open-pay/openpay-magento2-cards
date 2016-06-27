@@ -19,7 +19,7 @@
                     <![CDATA[<a href="http://openpay.mx/" target="_blank">Click here to sign up for Openpay account</a>]]>
                 </comment>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enabled</label>
+                    <label>Habilitar</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="is_sandbox" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -27,42 +27,53 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Title</label>
+                    <label>Título</label>
                 </field>
                 <field id="sandbox_merchant_id" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sandbox Merchant ID</label>                    
                 </field>
                 <field id="sandbox_sk" translate="label" type="obscure" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Sandbox Secret Key</label>
+                    <label>Sandbox Llave Secreta</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="sandbox_pk" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Sandbox Public Key</label>                    
+                    <label>Sandbox Llave Pública</label>                    
                 </field>
                 <field id="live_merchant_id" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Production Merchant ID</label>                    
+                    <label>Producción Merchant ID</label>                    
                 </field>
                 <field id="live_sk" translate="label" type="obscure" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Production Secret Key</label>
+                    <label>Producción Llave Secreta</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="live_pk" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Production Public Key</label>                    
+                    <label>Producción Llave Pública</label>                    
                 </field>   
                 <field id="cctypes" translate="label" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Credit Card Types</label>
+                    <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype</source_model>
+                    <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>   
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment from Applicable Countries</label>
+                <field id="interest_free" translate="label" type="multiselect" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Meses sin Intereses</label>
+                    <source_model>Openpay\Cards\Model\Source\MonthsInterestFree::getMonths</source_model>
+                    <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
+                </field>   
+                <field id="minimum_amount" translate="label" type="text" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Monto Mínimo</label>                    
+                    <validate>validate-number</validate>
+                    <comment>Define un monto mínimo para aceptar pagos a meses sin intereses (el monto mínimo deberá ser de al menos $1,800 MXN)</comment>                    
+                </field>  
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Pago Aplicable para Países</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment from Specific Countries</label>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Pago para Países Específicos</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>    
-                <field id="sort_order" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Sort Order</label>
+                <field id="sort_order" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Orden</label>
                 </field>                       
             </group>
         </section>

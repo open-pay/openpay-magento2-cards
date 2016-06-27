@@ -21,7 +21,8 @@
                 <sandbox_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />                
                 <live_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />     
                 <cctypes>AE,VI,MC</cctypes>
-                <allowspecific>0</allowspecific>                                     
+                <allowspecific>0</allowspecific>                        
+                <minimum_amount>1800</minimum_amount>                                                  
             </openpay_cards>
         </payment>
     </default>
