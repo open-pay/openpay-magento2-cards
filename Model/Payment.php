@@ -114,10 +114,20 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function assignData(\Magento\Framework\DataObject $data) {
         parent::assignData($data);
+        
+        $additionalData = $data->getData('additional_data');
         $infoInstance = $this->getInfoInstance();
-        $infoInstance->setAdditionalInformation('device_session_id', $data->getData('device_session_id'));
-        $infoInstance->setAdditionalInformation('openpay_token', $data->getData('openpay_token'));
-        $infoInstance->setAdditionalInformation('interest_free', $data->getData('interest_free'));
+        
+        $infoInstance->setAdditionalInformation('device_session_id', 
+            isset($additionalData['device_session_id']) ? $additionalData['device_session_id'] :  null
+        );
+        $infoInstance->setAdditionalInformation('openpay_token',     
+            isset($additionalData['openpay_token']) ? $additionalData['openpay_token'] : null
+        );
+        $infoInstance->setAdditionalInformation('interest_free',
+            isset($additionalData['interest_free']) ? $additionalData['interest_free'] : null
+        );
+
         return $this;
     }
 
