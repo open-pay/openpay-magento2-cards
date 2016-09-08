@@ -20,14 +20,6 @@
             "email": "federico.balderas@foograde.com"
         }
     ],
-    "autoload": {
-        "psr-4": {
-            "Openpay\\Cards\\": "Cards"
-        },
-        "files": [
-            "registration.php"
-        ]
-    },
     "extra": {
         "map": [
             ["*", "Openpay/Cards"]
