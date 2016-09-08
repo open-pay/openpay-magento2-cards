@@ -61,6 +61,15 @@ define(
                 return window.checkoutConfig.payment.months_interest_free;                
             },
             
+            showMonthsInterestFree: function() {
+                var months = window.checkoutConfig.payment.months_interest_free;         
+                var minimum_amount = window.checkoutConfig.payment.minimum_amount;         
+                var total = window.checkoutConfig.payment.total;
+                total = parseInt(total);
+                
+                return (months.length > 1 && total >= minimum_amount) ? true : false;                
+            },
+            
             /**
              * Prepare and process payment information
              */

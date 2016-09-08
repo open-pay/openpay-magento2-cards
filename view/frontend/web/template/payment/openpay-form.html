@@ -31,7 +31,7 @@
             <input type="hidden" id="openpay_token" name="openpay_token" value="" />
             <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
             
-            <div class="fieldset">                
+            <div class="fieldset" data-bind="visible: showMonthsInterestFree()">                
                 <div class="field type">
                     <label class="label" for="openpay_cards_interest_free" style="font-weight: 600; margin-bottom: 5px;">Meses sin intereses</label>
                     <div class="control">
