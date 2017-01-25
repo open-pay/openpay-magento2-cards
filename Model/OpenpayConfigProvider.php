@@ -80,7 +80,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
             "7" => "07 - Julio",
             "8" => "08 - Agosto",
             "9" => "09 - Septiembre",
-            "10 "=> "10 - Octubre",
+            "10"=> "10 - Octubre",
             "11"=> "11 - Noviembre",
             "12"=> "12 - Diciembre"
         );
