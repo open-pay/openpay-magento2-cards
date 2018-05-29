@@ -52,7 +52,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         $config = [];
         foreach ($this->methodCodes as $code) {
             if ($this->methods[$code]->isAvailable()) {
-                $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSanbox());                 
+                $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSandbox());                 
                 $config['payment']['months_interest_free'] = $this->payment->getMonthsInterestFree();
                 $config['payment']['total'] = $this->cart->getQuote()->getGrandTotal();
                 $config['payment']['minimum_amount'] = $this->payment->getMinimumAmount();

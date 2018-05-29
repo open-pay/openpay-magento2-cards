@@ -49,30 +49,35 @@
                 <field id="live_pk" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Producción Llave Pública</label>                    
                 </field>   
-                <field id="cctypes" translate="label" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="charge_type" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Configuración del cargo</label>
+                    <source_model>Openpay\Cards\Model\Source\ChargeTypes::getTypes</source_model>
+                    <comment>¿Qué es la autenticación selectiva? Es cuando se detecta riesgo en la transacción y se manda por 3D Secure</comment>
+                </field>   
+                <field id="cctypes" translate="label" type="multiselect" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype</source_model>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>   
-                <field id="interest_free" translate="label" type="multiselect" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="interest_free" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Meses sin Intereses</label>
                     <source_model>Openpay\Cards\Model\Source\MonthsInterestFree::getMonths</source_model>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>   
-                <field id="minimum_amount" translate="label" type="text" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="minimum_amount" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Monto Mínimo</label>                    
                     <validate>validate-number</validate>
                     <comment>Define un monto mínimo para aceptar pagos a meses sin intereses (el monto mínimo deberá ser de al menos $1,800 MXN)</comment>                    
                 </field>  
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago Aplicable para Países</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago para Países Específicos</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>    
-                <field id="sort_order" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sort_order" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
                 </field>                       
             </group>

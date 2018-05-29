@@ -22,6 +22,7 @@ use Magento\Payment\Model\Method\Logger;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Directory\Model\CountryFactory;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
@@ -50,6 +51,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $supported_currency_codes = array('USD', 'MXN');
     protected $minimum_amount;
     protected $months_interest_free;
+    protected $charge_type;
+    protected $logger;
+    protected $_storeManager;
+
 
     /**
      * 
@@ -65,8 +70,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Directory\Model\CountryFactory $countryFactory
      * @param \Openpay $openpay
      * @param array $data
+     * @param \Magento\Store\Model\StoreManagerInterface $data
      */
-    public function __construct(Context $context, 
+    public function __construct(
+            StoreManagerInterface $storeManager,
+            Context $context, 
             Registry $registry, 
             ExtensionAttributesFactory $extensionFactory, 
             AttributeValueFactory $customAttributeFactory, 
@@ -76,13 +84,17 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ModuleListInterface $moduleList, 
             TimezoneInterface $localeDate, 
             CountryFactory $countryFactory, 
-            \Openpay $openpay, 
-            array $data = array()
+            \Openpay $openpay,             
+            \Psr\Log\LoggerInterface $logger_interface,
+            array $data = array()            
     ) {
         
         parent::__construct(
                 $context, $registry, $extensionFactory, $customAttributeFactory, $paymentData, $scopeConfig, $logger, $moduleList, $localeDate, null, null, $data
         );
+        
+        $this->_storeManager = $storeManager;
+        $this->logger = $logger_interface;
 
         $this->scopeConfig = $scopeConfig;
         $this->country_factory = $countryFactory;
@@ -100,6 +112,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
         $this->months_interest_free = $this->getConfigData('interest_free');
+        $this->charge_type = $this->getConfigData('charge_type');
         $this->minimum_amount = $this->getConfigData('minimum_amount');
 
         $this->openpay = $openpay;
@@ -131,16 +144,18 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $this;
     }
 
-    /**
-     * Payment capturing
+    /**     
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @param float $amount
      * @return $this
      * @throws \Magento\Framework\Validator\Exception
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
-
+    public function order(\Magento\Payment\Model\InfoInterface $payment, $amount) {
+        unset($_SESSION['pdf_url']);
+        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);  // URL de la tienda
+        $this->logger->debug('Openpay capture');        
+        
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
@@ -151,55 +166,100 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $msg = 'ERROR X100 Please specify card info';
             throw new \Magento\Framework\Validator\Exception(__($msg));
         }
+        
+        $customer_data = array(
+            'name' => $billing->getFirstname(),
+            'last_name' => $billing->getLastname(),
+            'phone_number' => $billing->getTelephone(),
+            'email' => $order->getCustomerEmail()
+        );
 
-        try {
-            
-            unset($_SESSION['pdf_url']);
-            
-            $customer_data = array(
-                'name' => $billing->getFirstname(),
-                'last_name' => $billing->getLastname(),
-                'phone_number' => $billing->getTelephone(),
-                'email' => $order->getCustomerEmail()
+        if ($this->validateAddress($billing)) {
+            $customer_data['address'] = array(
+                'line1' => $billing->getStreetLine(1),
+                'line2' => $billing->getStreetLine(2),
+                'postal_code' => $billing->getPostcode(),
+                'city' => $billing->getCity(),
+                'state' => $billing->getRegion(),
+                'country_code' => $billing->getCountryId()
             );
-
-            if ($this->validateAddress($billing)) {
-                $customer_data['address'] = array(
-                    'line1' => $billing->getStreetLine(1),
-                    'line2' => $billing->getStreetLine(2),
-                    'postal_code' => $billing->getPostcode(),
-                    'city' => $billing->getCity(),
-                    'state' => $billing->getRegion(),
-                    'country_code' => $billing->getCountryId()
-                );
-            }
-
-            $charge_request = array(
-                'method' => 'card',
-                'currency' => strtolower($order->getBaseCurrencyCode()),
-                'amount' => $amount,
-                'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),                
-                'order_id' => $order->getIncrementId(),
-                'source_id' => $this->getInfoInstance()->getAdditionalInformation('openpay_token'),
-                'device_session_id' => $this->getInfoInstance()->getAdditionalInformation('device_session_id'),
-                'customer' => $customer_data                
-            );
-            
-            $interest_free = $this->getInfoInstance()->getAdditionalInformation('interest_free');
-            if($interest_free > 1){
-                $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
-            }  
-
-            $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
-            \Openpay::setSandboxMode($this->is_sandbox);
-            $charge = $openpay->charges->create($charge_request);
-            $payment->setTransactionId($charge->id)->setIsTransactionClosed(0);
-        } catch (\Exception $e) {
-            $this->debugData(['request' => $charge_request, 'exception' => $e->getMessage()]);
-            $this->_logger->error(__('Payment capturing error.'));
-            throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
         }
 
+        $charge_request = array(
+            'method' => 'card',
+            'currency' => strtolower($order->getBaseCurrencyCode()),
+            'amount' => $amount,
+            'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),                
+            'order_id' => $order->getIncrementId(),
+            'source_id' => $this->getInfoInstance()->getAdditionalInformation('openpay_token'),
+            'device_session_id' => $this->getInfoInstance()->getAdditionalInformation('device_session_id'),
+            'customer' => $customer_data                
+        );
+
+        // Meses sin intereses
+        $interest_free = $this->getInfoInstance()->getAdditionalInformation('interest_free');
+        if($interest_free > 1){
+            $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
+        }  
+
+        if ($this->charge_type == '3d') {
+            $charge_request['use_3d_secure'] = true;
+            $charge_request['redirect_url'] = $base_url.'openpay/payment/success';;
+        }
+        
+        $openpay = $this->getOpenpayInstance();
+
+        try {                   
+            $charge = $openpay->charges->create($charge_request);
+            $payment->setTransactionId($charge->id);                
+            
+            // Solo si es cargo directo se deja abierta la transacción
+            if ($this->charge_type == 'direct') {                
+                $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+                $order->setState($status)->setStatus($status);                                
+            }
+            
+            if ($this->charge_type == '3d') {                
+                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+                $order->setState($status)->setStatus($status);                    
+                                
+                $payment->setSkipOrderProcessing(true);                                     
+                $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url);                                                
+                
+                $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'status' => $charge->status));
+            }
+            
+            $order->setExtOrderId($charge->id);   
+            $order->save();
+            
+        } catch (\Exception $e) {
+            //$this->debugData(['exception' => $e->getMessage()]);            
+            $this->_logger->error(__('Payment capturing error.'));            
+            $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
+            
+            // Si hubo riesgo de fraude y el usuario definió autenticación selectiva, se envía por 3D secure
+            if ($this->charge_type == 'auth' && $e->getCode() == '3005') {                                                
+                $charge_request['use_3d_secure'] = true;
+                $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
+                
+                $charge = $openpay->charges->create($charge_request);
+                                
+                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+                $order->setState($status)->setStatus($status);                                
+                $order->setExtOrderId($charge->id);
+                $order->save();
+                
+                $payment->setTransactionId($charge->id);
+                $payment->setSkipOrderProcessing(true);      
+                $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url);                                                
+                
+                $this->logger->debug('3d_auth', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'status' => $charge->status));
+                
+            } else {
+                throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
+            }
+        }
+        
         return $this;
     }
 
@@ -239,16 +299,30 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     public function getPublicKey() {
         return $this->pk;
     }
+    
+    public function getPrivateKey() {
+        return $this->sk;
+    }
 
     /**
      * @return boolean
      */
-    public function isSanbox() {
+    public function isSandbox() {
         return $this->is_sandbox;
     }
     
     public function getMinimumAmount() {
         return $this->minimum_amount;
+    }
+    
+    public function getCode() {
+        return $this->_code;
+    }
+    
+    public function getOpenpayInstance() {
+        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
+        \Openpay::setSandboxMode($this->is_sandbox);        
+        return $openpay;
     }
     
     public function getMonthsInterestFree() {
@@ -258,14 +332,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }        
         return $months;
     }
-
+    
     /**
      * @param Exception $e
      * @return string
      */
     public function error($e) {
         /* 6001 el webhook ya existe */
-        switch ($e->getErrorCode()) {
+        switch ($e->getCode()) {
             case '1000':
             case '1004':
             case '1005':
@@ -307,7 +381,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 break;
         }
 
-        return 'ERROR '.$e->getErrorCode().'. '.$msg;
+        return 'ERROR '.$e->getCode().'. '.$msg;
     }
 
     /**
