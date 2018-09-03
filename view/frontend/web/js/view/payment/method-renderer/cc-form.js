@@ -23,9 +23,8 @@ define(
         //console.log(window.checkoutConfig.customerData);
         //console.log(customer.customerData);
         //console.log(quote.billingAddress._latestValue);
-        var customerData = quote.billingAddress._latestValue;  
-        var total = window.checkoutConfig.payment.total;
-        console.log(customerData);
+        var customerData = null; 
+        var total = window.checkoutConfig.payment.total;        
         
         $(document).on("change", "#interest_free", function() {        
             var monthly_payment = 0;
@@ -148,11 +147,12 @@ define(
                 var $form = $('#' + this.getCode() + '-form');
                 return $form.validation() && $form.validation('isValid');
             },
-            getCustomerFullName: function() {                
+            getCustomerFullName: function() {             
+                customerData = quote.billingAddress._latestValue;  
                 return customerData.firstname+' '+customerData.lastname;                
             },
             validateAddress: function() {
-
+                customerData = quote.billingAddress._latestValue;  
                 if(typeof customerData.city === 'undefined' || customerData.city.length === 0) {
                   return false;
                 }
@@ -183,7 +183,6 @@ define(
                 }
 
                 return address;
-
             }
         });
     }
