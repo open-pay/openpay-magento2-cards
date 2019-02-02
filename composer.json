@@ -6,7 +6,7 @@
     "minimum-stability": "stable",
     "license": "Apache-2.0",
     "require": {
-        "openpay/sdk": "1.*"
+        "openpay/sdk": "dev-master"
     },
     "authors": [
         {
