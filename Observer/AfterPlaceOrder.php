@@ -23,6 +23,7 @@ class AfterPlaceOrder implements ObserverInterface
     protected $_actionFlag;
     protected $_response;
     protected $_redirect;
+    protected $openpayCustomerFactory;
 
     public function __construct(
         Config $config, 
@@ -39,28 +40,25 @@ class AfterPlaceOrder implements ObserverInterface
         $this->_redirect = $redirect;
         $this->_response = $response;
         
-        $this->_actionFlag = $actionFlag;
+        $this->_actionFlag = $actionFlag;                
     }
     
     public function execute(Observer $observer) {
         $orderId = $observer->getEvent()->getOrderIds();
-        $order = $this->order->load($orderId[0]);        
-        $payment = $order->getPayment(); // \Magento\Sales\Api\Data\OrderPaymentInterface
-        $additionalData = new DataObject($payment->getAdditionalInformation());
-                
-        if ($this->config->getCode() != $payment->getMethod()) {
+        $order = $this->order->load($orderId[0]);                
+                        
+        if ($this->config->getCode() != 'openpay_cards') {
             return $this;
         }        
         
-        $openpay = $this->config->getOpenpayInstance();        
-        $charge = $openpay->charges->get($order->getExtOrderId());
+        $charge = $this->config->getOpenpayCharge($order->getExtOrderId(), $order->getExtCustomerId());
         
-        $this->logger->debug('#AfterPlaceOrder', array('order_id' => $orderId[0], 'openpay_3d_secure_url' => $additionalData->getData('openpay_3d_secure_url'), 'ext_order_id' => $order->getExtOrderId(), 'status' => $charge->status));                    
+        $this->logger->debug('#AfterPlaceOrder', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));                                    
         
-        if ($additionalData->getData('openpay_3d_secure_url') !== null && $charge->status == 'charge_pending') {       
-            $this->logger->debug('#AfterPlaceOrder', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $additionalData->getData('openpay_3d_secure_url')));                    
+        if ($charge->status == 'charge_pending' && isset($_SESSION['openpay_3d_secure_url'])) {               
+            $this->logger->debug('#AfterPlaceOrder', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_3d_secure_url']));                    
             $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
-            $this->_redirect->redirect($this->_response, $additionalData->getData('openpay_3d_secure_url'));            
+            $this->_redirect->redirect($this->_response, $_SESSION['openpay_3d_secure_url']);            
         }                
     }    
 

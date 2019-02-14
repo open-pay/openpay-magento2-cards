@@ -52,16 +52,22 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         $config = [];
         foreach ($this->methodCodes as $code) {
             if ($this->methods[$code]->isAvailable()) {
+                $protocol = $this->hostSecure() === true ? 'https://' : 'http://';
+                
                 $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSandbox());                 
                 $config['payment']['months_interest_free'] = $this->payment->getMonthsInterestFree();
+                $config['payment']['use_card_points'] = $this->payment->useCardPoints();
                 $config['payment']['total'] = $this->cart->getQuote()->getGrandTotal();
-                $config['payment']['minimum_amount'] = $this->payment->getMinimumAmount();
+                $config['payment']['can_save_cc'] = $this->payment->canSaveCC();
+                $config['payment']['cc_list'] = $this->payment->getCreditCardList();
+                $config['payment']['is_logged_in'] = $this->payment->isLoggedIn();
+                                
                 $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard"); 
                 $config['payment']['ccform']["hasVerification"][$code] = true;
                 $config['payment']['ccform']["hasSsCardType"][$code] = false;
                 $config['payment']['ccform']["months"][$code] = $this->getMonths();
                 $config['payment']['ccform']["years"][$code] = $this->getYears();
-                $config['payment']['ccform']["cvvImageUrl"][$code] = "http://".$_SERVER['SERVER_NAME']."/pub/static/frontend/Magento/luma/es_MX/Magento_Checkout/cvv.png";
+                $config['payment']['ccform']["cvvImageUrl"][$code] = $protocol.$_SERVER['SERVER_NAME']."/pub/static/frontend/Magento/luma/es_MX/Magento_Checkout/cvv.png";
                 $config['payment']['ccform']["ssStartYears"][$code] = $this->getStartYears();
             }
         }
@@ -102,6 +108,17 @@ class OpenpayConfigProvider implements ConfigProviderInterface
             $years[$year] = $year;
         }
         return $years;
+    }
+    
+    public function hostSecure() {
+        $is_secure = false;
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+            $is_secure = true;
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
+            $is_secure = true;
+        }
+        
+        return $is_secure;
     }
     
 }

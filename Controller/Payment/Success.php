@@ -69,56 +69,55 @@ class Success extends \Magento\Framework\App\Action\Action
      * @return \Magento\Framework\View\Result\Page
      */
     public function execute() {                
-        $openpay = $this->payment->getOpenpayInstance();        
-        $charge = $openpay->charges->get($this->request->getParam('id'));
-        
-        $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
-                  
-        $order = $this->orderRepository->get($this->checkoutSession->getLastOrderId());
-        if ($order && $charge->status != 'completed') {
-            $order->cancel();
-            $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Canceled by customer.'));
-            $order->save();
-                        
-            $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/cart'));
+        try {
+            $openpay = $this->payment->getOpenpayInstance();                          
+            $order = $this->orderRepository->get($this->checkoutSession->getLastOrderId());        
+            $customer_id = $order->getExtCustomerId();
+
+            if ($customer_id) {
+                $customer = $this->payment->getOpenpayCustomer($customer_id);
+                $charge = $customer->charges->get($this->request->getParam('id'));
+            } else {
+                $charge = $openpay->charges->get($this->request->getParam('id'));
+            }
+
+            $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
+
+            if ($order && $charge->status != 'completed') {
+                $order->cancel();
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Canceled by customer.'));
+                $order->save();
+
+                $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/cart'));
+
+                return $this->resultRedirectFactory->create()->setPath('checkout/cart');            
+            }
+
+            $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+            $order->setState($status)->setStatus($status);
+            $order->setTotalPaid($charge->amount);  
+            $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
+            $order->save();        
+
+            $invoice = $this->_invoiceService->prepareInvoice($order);        
+            $invoice->setTransactionId($charge->id);
+//            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+//            $invoice->register();            
+            $invoice->pay()->save();
+
+            $payment = $order->getPayment();                                
+            $payment->setAmountPaid($charge->amount);
+            $payment->setIsTransactionPending(false);
+            $payment->save();
+
+            $this->checkoutSession->clearQuote();
+
+            $this->logger->debug('#SUCCESS', array('redirect' => 'sales/order/history'));
+            return $this->resultRedirectFactory->create()->setPath('sales/order/history');
             
-            return $this->resultRedirectFactory->create()->setPath('checkout/cart');            
+        } catch (\Exception $e) {
+            $this->logger->error('#SUCCESS', array('message' => $e->getMessage(), 'code' => $e->getCode(), 'line' => $e->getLine(), 'trace' => $e->getTraceAsString()));
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
-                
-        $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
-        $order->setState($status)->setStatus($status);
-        $order->setTotalPaid($charge->amount);  
-        $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
-        $order->save();        
-        
-        $invoice = $this->_invoiceService->prepareInvoice($order);        
-        $invoice->setTransactionId($charge->id);
-        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-        $invoice->register();
-        $invoice->save();
-                
-        $formatedPrice = $order->getBaseCurrency()->formatTxt($order->getGrandTotal());
-        
-        $payment = $order->getPayment();        
-        
-        // Prepare transaction
-        $transaction = $this->transactionBuilder->setPayment($payment)
-            ->setOrder($order)
-            ->setTransactionId($charge->id)        
-            ->setFailSafe(true)
-            ->build(\Magento\Sales\Model\Order\Payment\Transaction::TYPE_CAPTURE);
-        $transaction->save();
-
-        // Add transaction to payment
-        $payment->addTransactionCommentsToOrder($transaction, __('The authorized amount is %1.', $formatedPrice));
-        $payment->setParentTransactionId(null);
-        $payment->setAmountPaid($charge->amount);
-        $payment->save();
-        
-        $this->checkoutSession->clearQuote();
-        
-        $this->logger->debug('#SUCCESS', array('redirect' => 'sales/order/history'));
-        return $this->resultRedirectFactory->create()->setPath('sales/order/history');
     }
-
 }

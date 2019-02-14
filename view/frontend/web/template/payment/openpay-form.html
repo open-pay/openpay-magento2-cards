@@ -26,10 +26,25 @@
             <!-- ko template: getTemplate() --><!-- /ko -->
             <!--/ko-->
         </div>
+        
+        <div class="fieldset">            
+            <h3>Información de Pago</h3>
+            <select id="openpay_cc" name="openpay_cc" class="select" data-bind="
+                event:{ change: creditCardOption() },
+                options: getCreditCardList(), optionsText: 'name', optionsValue: 'value'"
+            ></select>
+        </div>                
 
-        <form class="form" data-bind="attr: {'id': getCode() + '-form'}">    
+        <form id="openpay_form" class="form" data-bind="attr: {'id': getCode() + '-form'}">    
             <input type="hidden" id="openpay_token" name="openpay_token" value="" />
+            <input type="hidden" name="use_card_points" id="use_card_points" value="false" />
             <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
+            
+            <div id="save_cc_fieldset" class="fieldset" data-bind="visible: canSaveCC() && isLoggedIn()" style="margin-bottom: 20px;">
+                <label for="save_cc" class="label">
+                    <input type="checkbox" name="save_cc" id="save_cc" /> <span style="font-weight: 600;">Guardar tarjeta</span>
+                </label>    
+            </div>
             
             <div class="fieldset" data-bind="visible: showMonthsInterestFree()">                
                 <div class="field type">
@@ -37,7 +52,7 @@
                     <div class="control">
                         <select id="interest_free" name="interest_free" class="select" style="width: auto;" data-bind="options: getMonthsInterestFree(), 
                        optionsText: function(month) {
-                           return month+' meses';
+                           return month > 1 ? month +' meses' : 'Pago de contado';
                        }"></select>
                     </div>                    
                 </div>     

@@ -24,6 +24,9 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Directory\Model\CountryFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
+use Magento\Customer\Model\Customer;
+use Magento\Customer\Model\Session as CustomerSession;
+
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
 
@@ -31,12 +34,16 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
     protected $_code = self::CODE;
     protected $_isGateway = true;
+    protected $_canOrder = true;
     protected $_canCapture = true;
     protected $_canCapturePartial = true;
-    protected $_canRefund = false;
-    protected $_canRefundInvoicePartial = false;
+    protected $_canRefund = true;
+    protected $_canRefundInvoicePartial = true;
+    protected $_canAuthorize = true;
+    protected $_canVoid = true;
     protected $openpay = false;
     protected $is_sandbox;
+    protected $use_card_points;
     protected $merchant_id = null;
     protected $pk = null;
     protected $sk = null;
@@ -48,12 +55,23 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $live_pk;
     protected $country_factory;
     protected $scopeConfig;
-    protected $supported_currency_codes = array('USD', 'MXN');
-    protected $minimum_amount;
+    protected $supported_currency_codes = array('USD', 'MXN');    
     protected $months_interest_free;
     protected $charge_type;
     protected $logger;
     protected $_storeManager;
+    protected $save_cc;
+    
+    /**
+     * @var Customer
+     */
+    protected $customerModel;
+    /**
+     * @var CustomerSession
+     */
+    protected $customerSession;    
+    
+    protected $openpayCustomerFactory;
 
 
     /**
@@ -85,13 +103,20 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             TimezoneInterface $localeDate, 
             CountryFactory $countryFactory, 
             \Openpay $openpay,             
-            \Psr\Log\LoggerInterface $logger_interface,
+            \Psr\Log\LoggerInterface $logger_interface,            
+            Customer $customerModel,
+            CustomerSession $customerSession,            
+            \Openpay\Cards\Model\OpenpayCustomerFactory $openpayCustomerFactory,
             array $data = array()            
     ) {
         
         parent::__construct(
                 $context, $registry, $extensionFactory, $customAttributeFactory, $paymentData, $scopeConfig, $logger, $moduleList, $localeDate, null, null, $data
         );
+                    
+        $this->customerModel = $customerModel;
+        $this->customerSession = $customerSession;
+        $this->openpayCustomerFactory = $openpayCustomerFactory;
         
         $this->_storeManager = $storeManager;
         $this->logger = $logger_interface;
@@ -113,9 +138,31 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
         $this->months_interest_free = $this->getConfigData('interest_free');
         $this->charge_type = $this->getConfigData('charge_type');
-        $this->minimum_amount = $this->getConfigData('minimum_amount');
-
+        //$this->minimum_amount = $this->getConfigData('minimum_amount');
+        $this->use_card_points = $this->getConfigData('use_card_points');
+        $this->save_cc = $this->getConfigData('save_cc');
+        
         $this->openpay = $openpay;
+    }
+    
+    /**
+     * Validate payment method information object
+     *
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException     
+     */
+    public function validate() {                                     
+        $info = $this->getInfoInstance();
+        $openpay_cc = $info->getAdditionalInformation('openpay_cc');
+        
+        $this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc));                    
+        
+        // Si se utiliza una tarjeta nueva, se realiza la validación necesaria por Magento 
+        if ($openpay_cc == 'new') {
+            return parent::validate();
+        }
+                
+        return $this;
     }
 
     /**
@@ -141,9 +188,122 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             isset($additionalData['interest_free']) ? $additionalData['interest_free'] : null
         );
         
+        $infoInstance->setAdditionalInformation('use_card_points',
+            isset($additionalData['use_card_points']) ? $additionalData['use_card_points'] : null
+        );
+        
+        $infoInstance->setAdditionalInformation('save_cc',
+            isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
+        );
+        
+        $infoInstance->setAdditionalInformation('openpay_cc',
+            isset($additionalData['openpay_cc']) ? $additionalData['openpay_cc'] : null
+        );
+        
         return $this;
     }
+    
+    /**
+     * Refund capture
+     *
+     * @param \Magento\Framework\DataObject|\Magento\Payment\Model\InfoInterface|Payment $payment
+     * @param float $amount
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount){
+        $order = $payment->getOrder();
+        $trx_id = $order->getExtOrderId();
+        $customer_id = $order->getExtCustomerId();
+        
+        $this->logger->debug('#refund', array('$trx_id' => $trx_id, '$customer_id' => $customer_id, '$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
+        
+        if ($amount <= 0) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('Invalid amount for refund.'));
+        }
+        
+        try {
+            $refundData = array(
+                'description' => 'Reembolso',
+                'amount' => $amount                
+            );
 
+//            $openpay = $this->getOpenpayInstance();
+//            $charge = $openpay->charges->get($trx_id);
+            $charge = $this->getOpenpayCharge($trx_id, $customer_id);            
+            $charge->refund($refundData);            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Exception\LocalizedException(__($e->getMessage()));
+        }        
+        
+        return $this;
+    }
+    
+    
+    /**
+     * Send authorize request to gateway
+     *
+     * @param \Magento\Framework\DataObject|\Magento\Payment\Model\InfoInterface $payment
+     * @param  float $amount
+     * @return void
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount) {         
+        $order = $payment->getOrder();
+        $this->logger->debug('#authorize', array('$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
+        $payment->setAdditionalInformation('payment_type', $this->getConfigData('payment_action'));
+        $payment->setIsTransactionClosed(false);
+        $payment->setSkipOrderProcessing(true);
+        $this->processCapture($payment, $amount);
+        return $this;
+    }
+    
+    /**
+     * Send capture request to gateway
+     *
+     * @param \Magento\Framework\DataObject|\Magento\Payment\Model\InfoInterface $payment
+     * @param float $amount
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
+        $order = $payment->getOrder();                
+        $this->logger->debug('#capture', array('$order_id' => $order->getIncrementId(), '$trx_id' => $payment->getLastTransId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
+        
+        if ($amount <= 0) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('Invalid amount for capture.'));
+        }               
+        
+        $payment->setAmount($amount);
+        if(!$payment->getLastTransId()){            
+            $this->processCapture($payment, $amount);
+        } else {
+            $this->captureOpenpayTransaction($payment, $amount);
+        }        
+        
+        return $this;
+    }
+    
+    protected function captureOpenpayTransaction(\Magento\Payment\Model\InfoInterface $payment, $amount){
+        $order = $payment->getOrder();                
+        $customer_id = $order->getExtCustomerId();
+        
+        $this->logger->debug('#captureOpenpayTransaction', array('$trx_id' => $payment->getLastTransId(), '$customer_id' => $customer_id, '$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
+                
+        try {
+            $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
+            $charge = $this->getOpenpayCharge($payment->getLastTransId(), $customer_id);
+            $captureData = array('amount' => $amount);
+            $charge->capture($captureData);
+
+            return $charge;
+        } catch (\Exception $e) {
+            $this->logger->error('captureOpenpayTransaction', array('message' => $e->getMessage(), 'code' => $e->getCode()));
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    
     /**     
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
@@ -151,22 +311,35 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return $this
      * @throws \Magento\Framework\Validator\Exception
      */
-    public function order(\Magento\Payment\Model\InfoInterface $payment, $amount) {
+    public function processCapture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
         unset($_SESSION['pdf_url']);
-        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);  // URL de la tienda
-        $this->logger->debug('Openpay capture');        
+        unset($_SESSION['show_map']);
+        unset($_SESSION['openpay_3d_secure_url']);
+        
+        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);  // URL de la tienda        
         
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
+        
+        $this->logger->debug('#processCapture', array('charge_type' => $this->charge_type,'$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));        
 
         /** @var \Magento\Sales\Model\Order\Address $billing */
         $billing = $order->getBillingAddress();
 
-        if (!$this->getInfoInstance()->getAdditionalInformation('openpay_token')) {
-            $msg = 'ERROR X100 Please specify card info';
+        $capture = $this->getConfigData('payment_action') == 'authorize_capture' ? true : false;
+        $token = $this->getInfoInstance()->getAdditionalInformation('openpay_token');
+        $device_session_id = $this->getInfoInstance()->getAdditionalInformation('device_session_id');
+        $use_card_points = $this->getInfoInstance()->getAdditionalInformation('use_card_points');
+        $save_cc = $this->getInfoInstance()->getAdditionalInformation('save_cc');
+        $openpay_cc = $this->getInfoInstance()->getAdditionalInformation('openpay_cc');
+        
+        if (!$token && (!$openpay_cc || $openpay_cc == 'new')) {
+            $msg = 'ERROR 100 Please specify card info';
             throw new \Magento\Framework\Validator\Exception(__($msg));
         }
         
+        $this->logger->debug('#processCapture', array('$openpay_cc' => $openpay_cc, '$save_cc' => $save_cc, '$device_session_id' => $device_session_id));        
+                                
         $customer_data = array(
             'name' => $billing->getFirstname(),
             'last_name' => $billing->getLastname(),
@@ -184,16 +357,18 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 'country_code' => $billing->getCountryId()
             );
         }
-
+        
         $charge_request = array(
             'method' => 'card',
             'currency' => strtolower($order->getBaseCurrencyCode()),
             'amount' => $amount,
             'description' => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),                
             'order_id' => $order->getIncrementId(),
-            'source_id' => $this->getInfoInstance()->getAdditionalInformation('openpay_token'),
-            'device_session_id' => $this->getInfoInstance()->getAdditionalInformation('device_session_id'),
-            'customer' => $customer_data                
+            'source_id' => $token,
+            'device_session_id' => $device_session_id,
+            'customer' => $customer_data,
+            'use_card_points' => $use_card_points,  
+            'capture' => $capture
         );
 
         // Meses sin intereses
@@ -202,65 +377,249 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
         }  
 
+        // 3D Secure
         if ($this->charge_type == '3d') {
             $charge_request['use_3d_secure'] = true;
-            $charge_request['redirect_url'] = $base_url.'openpay/payment/success';;
+            $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
         }
-        
-        $openpay = $this->getOpenpayInstance();
-
-        try {                   
-            $charge = $openpay->charges->create($charge_request);
-            $payment->setTransactionId($charge->id);                
-            
-            // Solo si es cargo directo se deja abierta la transacción
-            if ($this->charge_type == 'direct') {                
-                $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
-                $order->setState($status)->setStatus($status);                                
-            }
-            
-            if ($this->charge_type == '3d') {                
-                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
-                $order->setState($status)->setStatus($status);                    
-                                
-                $payment->setSkipOrderProcessing(true);                                     
-                $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url);                                                
                 
-                $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'status' => $charge->status));
+        try {                           
+            // Realiza la transacción en Openpay
+            $charge = $this->makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc);                                                
+            
+            $payment->setTransactionId($charge->id);  
+            $payment->setCcLast4(substr($charge->card->card_number, -4));
+            $payment->setCcType($this->getCCBrandCode($charge->card->brand));
+            $payment->setCcExpMonth($charge->card->expiration_month);
+            $payment->setCcExpYear($charge->card->expiration_year);
+                                                                                    
+            if ($this->charge_type == '3d') {            
+                $payment->setIsTransactionPending(true);                
+                $_SESSION['openpay_3d_secure_url'] = $charge->payment_method->url;
+                $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'openpay_status' => $charge->status));
             }
             
-            $order->setExtOrderId($charge->id);   
-            $order->save();
+            $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
+            $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
             
-        } catch (\Exception $e) {
-            //$this->debugData(['exception' => $e->getMessage()]);            
-            $this->_logger->error(__('Payment capturing error.'));            
-            $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
+            // Registra el ID de la transacción de Openpay
+            $order->setExtOrderId($charge->id);   
+            
+            // Registra (si existe), el ID de Customer de Openpay
+            $order->setExtCustomerId($openpay_customer_id);
+            $order->save();                       
+            
+            $this->logger->debug('#saveOrder');        
+            
+        } catch (\OpenpayApiTransactionError $e) {                        
+            $this->logger->error('OpenpayApiTransactionError', array('message' => $e->getMessage(), 'code' => $e->getErrorCode(), '$status' => $order->getStatus()));
             
             // Si hubo riesgo de fraude y el usuario definió autenticación selectiva, se envía por 3D secure
-            if ($this->charge_type == 'auth' && $e->getCode() == '3005') {                                                
+            if ($this->charge_type == 'auth' && $e->getErrorCode() == '3005') {                                                
                 $charge_request['use_3d_secure'] = true;
                 $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
-                
-                $charge = $openpay->charges->create($charge_request);
                                 
-                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
-                $order->setState($status)->setStatus($status);                                
+                $charge = $this->makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc);
+                $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
+                                
                 $order->setExtOrderId($charge->id);
+                $order->setExtCustomerId($openpayCustomerFactory->openpay_id);
                 $order->save();
                 
-                $payment->setTransactionId($charge->id);
-                $payment->setSkipOrderProcessing(true);      
-                $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url);                                                
+                $payment->setTransactionId($charge->id);      
+                $payment->setCcLast4(substr($charge->card->card_number, -4));
+                $payment->setCcType($this->getCCBrandCode($charge->card->brand));
+                $payment->setCcExpMonth($charge->card->expiration_month);
+                $payment->setCcExpYear($charge->card->expiration_year);                
+                $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url); 
+                $payment->setSkipOrderProcessing(true);                      
+                $payment->setIsTransactionPending(true);
                 
-                $this->logger->debug('3d_auth', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'status' => $charge->status));
+                $_SESSION['openpay_3d_secure_url'] = $charge->payment_method->url;
                 
+                $this->logger->debug('3d_auth', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'openpay_status' => $charge->status, '$status' => $order->getStatus()));                
             } else {
                 throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
             }
+        } catch (\Exception $e) {
+            $this->_logger->error(__('Payment capturing error.'));            
+            $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
+            throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
         }
         
         return $this;
+    }
+    
+    private function getCCBrandCode($brand) {
+        $code = null;
+        switch ($brand) {
+            case "mastercard":
+                $code = "MC";
+                break;
+            
+            case "visa":
+                $code = "VI";
+                break;
+            
+            case "american_express":
+                $code = "AE";
+                break;
+                    
+        }
+        return $code;
+    }
+    
+    private function makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc) {        
+        $openpay = $this->getOpenpayInstance();
+
+        if (!$this->customerSession->isLoggedIn()) {
+            // Cargo para usuarios "invitados"
+            return $openpay->charges->create($charge_request);
+        }
+
+        // Se remueve el atributo de "customer" porque ya esta relacionado con una cuenta en Openpay
+        unset($charge_request['customer']); 
+
+        $openpay_customer = $this->retrieveOpenpayCustomerAccount($customer_data);
+
+        if ($save_cc == '1' && $openpay_cc == 'new') {
+            $card_data = array(            
+                'token_id' => $token,            
+                'device_session_id' => $device_session_id
+            );
+            $card = $this->createCreditCard($openpay_customer, $card_data);
+
+            // Se reemplaza el "source_id" por el ID de la tarjeta
+            $charge_request['source_id'] = $card->id;                                                            
+        } else if ($save_cc == '0' && $openpay_cc != 'new') {
+            $charge_request['source_id'] = $openpay_cc;                    
+        }
+
+        // Cargo para usuarios con cuenta
+        return $openpay_customer->charges->create($charge_request);            
+    }
+    
+    public function getOpenpayCharge($charge_id, $customer_id = null) {
+        try {                        
+            if ($customer_id === null) {                
+                $openpay = $this->getOpenpayInstance();
+                return $openpay->charges->get($charge_id);
+            }            
+            
+            $openpay_customer = $this->getOpenpayCustomer($customer_id);
+            return $openpay_customer->charges->get($charge_id);            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }
+    }
+    
+    private function hasOpenpayAccount($customer_id) {        
+        try {
+            $openpay_customer_local = $this->openpayCustomerFactory->create();
+            $response = $openpay_customer_local->fetchOneBy('customer_id', $customer_id);
+            return $response;
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }  
+    }
+    
+    private function retrieveOpenpayCustomerAccount($customer_data) {
+        try {
+            $customerId = $this->customerSession->getCustomer()->getId();                
+            //$customer = $this->customerModel->load($customerId);                
+            //$this->logger->debug('getFirstname => '.$customer->getFirstname()); 
+            $has_openpay_account = $this->hasOpenpayAccount($customerId);
+            if ($has_openpay_account === false) {
+                $openpay_customer = $this->createOpenpayCustomer($customer_data);
+                $this->logger->debug('$openpay_customer => '.$openpay_customer->id);
+
+                $data = [
+                    'customer_id' => $customerId,
+                    'openpay_id' => $openpay_customer->id
+                ];
+
+                // Se guarda en BD la relación
+                $openpay_customer_local = $this->openpayCustomerFactory->create();
+                $openpay_customer_local->addData($data)->save();                    
+            } else {
+                $openpay_customer = $this->getOpenpayCustomer($has_openpay_account->openpay_id);
+            }
+            
+            return $openpay_customer;
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }
+    }
+    
+    private function createOpenpayCustomer($data) {
+        try {
+            $openpay = $this->getOpenpayInstance();
+            return $openpay->customers->add($data);            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    public function getOpenpayCustomer($openpay_customer_id) {
+        try {
+            $openpay = $this->getOpenpayInstance();
+            return $openpay->customers->get($openpay_customer_id);            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    private function createCreditCard($customer, $data) {
+        try {
+            return $customer->cards->add($data);            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    private function getCreditCards($customer, $customer_created_at) {
+        $from_date = date('Y-m-d', strtotime($customer_created_at));
+        $to_date = date('Y-m-d');
+        try {
+            return $customer->cards->getList(array(
+                'creation[gte]' => $from_date,
+                'creation[lte]' => $to_date,
+                'offset' => 0,
+                'limit' => 10
+            ));            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    public function getCreditCardList() {
+        if (!$this->customerSession->isLoggedIn()) {
+            return array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+        }
+        
+        $customerId = $this->customerSession->getCustomer()->getId();
+        $has_openpay_account = $this->hasOpenpayAccount($customerId);
+        if ($has_openpay_account === false) {
+            return array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+        }
+        
+        try {
+            $list = array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+            $customer = $this->getOpenpayCustomer($has_openpay_account->openpay_id);
+            $cards = $this->getCreditCards($customer, $has_openpay_account->created_at);
+            
+            foreach ($cards as $card) {                
+                array_push($list, array('value' => $card->id, 'name' => strtoupper($card->brand).' '.$card->card_number));
+            }
+            
+            return $list;            
+        } catch (\Exception $e) {
+            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }        
+    }
+    
+    public function isLoggedIn() {
+        return $this->customerSession->isLoggedIn();
     }
 
     /**
@@ -311,9 +670,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $this->is_sandbox;
     }
     
-    public function getMinimumAmount() {
-        return $this->minimum_amount;
-    }
+//    public function getMinimumAmount() {
+//        return $this->minimum_amount;
+//    }
     
     public function getCode() {
         return $this->_code;
@@ -331,6 +690,20 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             array_unshift($months, '1');
         }        
         return $months;
+    }
+    
+    public function useCardPoints() {
+        return $this->use_card_points;
+    }
+    
+    /**
+     * 
+     * Valida que los clientes pueda guardar sus TC
+     * 
+     * @return boolean
+     */
+    public function canSaveCC() {
+        return $this->save_cc;
     }
     
     /**

@@ -40,10 +40,11 @@ define(
             monthly_payment = monthly_payment.toFixed(2);            
             
             $("#monthly-payment").text(monthly_payment);
-        });
-
+        });            
+        
+        //$("body").append('<div class="modal fade" role="dialog" id="card-points-dialog"> <div class="modal-dialog modal-sm"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title">Pagar con Puntos</h4> </div> <div class="modal-body"> <p>¿Desea usar los puntos de su tarjeta para realizar este pago?</p> </div> <div class="modal-footer"> <button type="button" class="btn btn-success" data-dismiss="modal" id="points-yes-button">Si</button> <button type="button" class="btn btn-default" data-dismiss="modal" id="points-no-button">No</button> </div> </div> </div></div>');
+        
         return Component.extend({
-
             defaults: {
                 template: 'Openpay_Cards/payment/openpay-form'
             },
@@ -60,14 +61,47 @@ define(
                 return window.checkoutConfig.payment.months_interest_free;                
             },
             
-            showMonthsInterestFree: function() {
-                var months = window.checkoutConfig.payment.months_interest_free;         
-                var minimum_amount = window.checkoutConfig.payment.minimum_amount;         
-                var total = window.checkoutConfig.payment.total;
-                total = parseInt(total);
-                
-                return (months.length > 1 && total >= minimum_amount) ? true : false;                
+            creditCardOption: function() {
+                console.log('#openpay_cc', $('#openpay_cc').val());                  
+                if ($('#openpay_cc').val() !== "new") {                                 
+                    $('#save_cc').prop('checked', false);                
+                    $('#save_cc').prop('disabled', true);                 
+                    
+                    $('#openpay_cards_cc_number').val("");                                     
+                    $("#openpay_cards_expiration").val("").change();
+                    $("#openpay_cards_expiration_yr").val("").change();
+                    $('#openpay_cards_cc_cid').val("");                                                         
+                    
+                    $('#save_cc_fieldset').hide();                    
+                    $('#payment_form_openpay_cards').hide();
+                } else {                    
+                    $('#payment_form_openpay_cards').show();
+                    $('#save_cc_fieldset').show();
+                    $('#save_cc').prop('disabled', false);
+                }
             },
+            
+            showMonthsInterestFree: function() {
+                var months = window.checkoutConfig.payment.months_interest_free;                         
+                var total = window.checkoutConfig.payment.total;                
+                total = parseInt(total);
+                                
+                return months.length > 1 ? true : false;                
+            },
+            
+            canSaveCC: function() {
+                return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;                
+            },
+            
+            isLoggedIn: function() {
+                console.log('isLoggedIn()', window.checkoutConfig.payment.is_logged_in);
+                return window.checkoutConfig.payment.is_logged_in;
+            },            
+            
+            getCreditCardList: function() {
+                console.log('getCreditCardList()', window.checkoutConfig.payment.cc_list);
+                return window.checkoutConfig.payment.cc_list;
+            },            
             
             /**
              * Prepare and process payment information
@@ -75,17 +109,27 @@ define(
             preparePayment: function () {
                 var self = this;
                 var $form = $('#' + this.getCode() + '-form');
+                
+                var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox === "0" ? false : true;
+                var useCardPoints = window.checkoutConfig.payment.use_card_points === "0" ? false : true;
+                OpenPay.setId(window.checkoutConfig.payment.openpay_credentials.merchant_id);
+                OpenPay.setApiKey(window.checkoutConfig.payment.openpay_credentials.public_key);
+                OpenPay.setSandboxMode(isSandbox);                    
 
-                if($form.validation() && $form.validation('isValid')){
-                    this.messageContainer.clear();
+                //antifraudes
+                OpenPay.deviceData.setup(this.getCode() + '-form', "device_session_id");
+                
+                console.log('#openpay_cc', $('#openpay_cc').val());
+                
+                if ($('#openpay_cc').val() !== 'new') {
+                    console.log('Pagar con token', $('#openpay_cc').val());
+                    this.messageContainer.clear();                                        
+                    self.placeOrder();
+                    return;
+                }
 
-                    var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox === "0" ? false : true;
-                    OpenPay.setId(window.checkoutConfig.payment.openpay_credentials.merchant_id);
-                    OpenPay.setApiKey(window.checkoutConfig.payment.openpay_credentials.public_key);
-                    OpenPay.setSandboxMode(isSandbox);                    
-
-                    //antifraudes
-                    OpenPay.deviceData.setup(this.getCode() + '-form', "device_session_id");
+                if ($form.validation() && $form.validation('isValid')) {
+                    this.messageContainer.clear();                                        
 
                     var year_full = $('#openpay_cards_expiration_yr').val();
                     var holder_name = this.getCustomerFullName();
@@ -106,29 +150,40 @@ define(
                         data["address"] = this.validateAddress();
                     }
 
-                    OpenPay.token.create(
-                        data,
-                        function(response) {
+                    OpenPay.token.create(data, function(response) {
                             var token_id = response.data.id;
                             $("#openpay_token").val(token_id);                            
-                            //$form.append('<input type="hidden" id="openpay_token" name="openpay_token" value="' + token_id + '" />');
+                            
+                            if (!response.data.card.points_card || !useCardPoints) {                                
+                                console.log('NO useCardPoints');
+                                self.placeOrder();
+                                return;
+                            } 
+                            
+                            var r = confirm("¿Desea usar los puntos de su tarjeta para realizar este pago?");
+                            if (r === true) {
+                                $('#use_card_points').val('true');                                                        
+                            } else {
+                                $('#use_card_points').val('false');                        
+                            } 
                             self.placeOrder();
+                            //$("#card-points-dialog").modal("show");                            
                         },
                         function(response) {
                             console.log("token error");
-                            this.messageContainer.addErrorMessage({
+                            self.messageContainer.addErrorMessage({
                                 message: response.data.description
                             });
                         }
                     );
-                }else{
+                } else {
                     return $form.validation() && $form.validation('isValid');
                 }
             },
             /**
              * @override
              */
-            getData: function () {
+            getData: function () {                
                 return {
                     'method': "openpay_cards",
                     'additional_data': {
@@ -139,12 +194,20 @@ define(
                         'cc_number': this.creditCardNumber(),
                         'openpay_token': $("#openpay_token").val(),
                         'device_session_id': $('#device_session_id').val(),
-                        'interest_free': $('#interest_free').val()
+                        'interest_free': $('#interest_free').val(),
+                        'use_card_points': $('#use_card_points').val(),
+                        'save_cc': $("#save_cc").is(':checked') ? '1' : '0',
+                        'openpay_cc': $('#openpay_cc').val()
                     }
                 };
             },
             validate: function() {
-                var $form = $('#' + this.getCode() + '-form');
+                if ($('#openpay_cc').val() !== 'new') {
+                    console.log('validate', $('#openpay_cc').val());
+                    return true;
+                }
+                
+                var $form = $('#' + this.getCode() + '-form');                
                 return $form.validation() && $form.validation('isValid');
             },
             getCustomerFullName: function() {             
