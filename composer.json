@@ -2,11 +2,11 @@
     "name": "openpay/magento2-cards",
     "description": "Credit card payment integration for Magento 2",
     "type": "magento2-module",
-    "version": "2.3.2",
-    "minimum-stability": "dev",    
+    "version": "2.3.3",
+    "minimum-stability": "stable",    
     "license": "Apache-2.0",
     "require": {
-        "openpay/sdk": "dev-master"
+        "openpay/sdk": "1.2.*"
     },
     "authors": [
         {
