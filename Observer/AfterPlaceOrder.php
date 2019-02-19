@@ -47,7 +47,7 @@ class AfterPlaceOrder implements ObserverInterface
         $orderId = $observer->getEvent()->getOrderIds();
         $order = $this->order->load($orderId[0]);                
                         
-        if ($this->config->getCode() != 'openpay_cards') {
+        if ($order->getPayment()->getMethod() != 'openpay_cards') {
             return $this;
         }        
         
