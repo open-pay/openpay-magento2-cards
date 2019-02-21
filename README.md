@@ -41,15 +41,15 @@ Para configurar el módulo desde el panel de administración de la tienda diríj
 - Ofrecer meses sin intereses ([revisar condiciones y comisiones](https://mage2.pro/t/755)).
 - Limitar las tarjetas soportadas.
 
-![](https://drive.google.com/uc?export=view&id=1MoT4bjXc3yXkhJhZ0eEVqaKMtcJRGep4)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/configuracion_tarjetas.png)
 
 ### 2. Tienda. Pago utilizando una nueva tarjeta
 
-![](https://drive.google.com/uc?export=view&id=1p0s_uWGeRhlbZ1_e7QMBMfwH87-FRZlg)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/checkout_sencillo.png)
 
 ### 3. Tienda. Pago utilizando una tarjeta guardada
 
-![](https://drive.google.com/uc?export=view&id=1Z-IdFYKlew9Vg4XNr2PXD5fGsJh4UACA)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/checkout_tarjeta_guardada.png)
 
 ### 4. Administración. Pre-autorizaciones
 
@@ -57,14 +57,14 @@ Cuando se tiene habilitada la opción de pre-autorizaciones, el monto de la tran
 
 El detalle de una compra que haya sido únicamente pre-autorizada se mostrará con adeudo y un monto  por pagar del total de la cuenta, tal como se muestra en la imagen siguiente:
 
-![](https://drive.google.com/uc?export=view&id=13FcNYEMdznjMfVdVl6EHHA3oLDOVHeKf)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/preautorizacion_1.png)
 
 Para hacer efectivo el cargo a la tarjeta el administrador deberá "facturar" la compra:
 - Ingresar al detalle de la orden de compra
 - Ir a la sección Factura (Invoice)
 - Al final de la pantalla capturar el pago
 
-![](https://drive.google.com/uc?export=view&id=1MsrxA2xhtAV7vK9FFW7UnpVRhYELzXMs)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/preautorizacion_2.png)
 
 Una vez realizado esto, el cobro será realizado a la tarjeta relacionada a la compra. 
 
@@ -80,4 +80,5 @@ Para efectuar un reembolso será necesario:
 - Generar una **Nota de Crédito** (Credit Memo)
 - Ingresar el monto a reemnolsar y ejecutar la acción
 
-![](https://drive.google.com/uc?export=view&id=1a-FRS27UXAW27-GU6xi_AbqsWnaXh1dc)
+![](https://s3.amazonaws.com/openpay-plugins-screenshots/magento2/reembolso.png)
+
