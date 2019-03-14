@@ -69,9 +69,19 @@ class Success extends \Magento\Framework\App\Action\Action
      * @return \Magento\Framework\View\Result\Page
      */
     public function execute() {                
-        try {
+        try {                        
+            $order_id = $this->checkoutSession->getLastOrderId();
+            $quote_id = $this->checkoutSession->getLastQuoteId();
+            
+            $this->checkoutSession->setLastSuccessQuoteId($quote_id);
+            
+            $this->logger->debug('getLastQuoteId: '.$quote_id);
+            $this->logger->debug('getLastOrderId: '.$order_id);
+            $this->logger->debug('getLastSuccessQuoteId: '.$this->checkoutSession->getLastSuccessQuoteId());
+            $this->logger->debug('getLastRealOrderId: '.$this->checkoutSession->getLastRealOrderId());        
+            
             $openpay = $this->payment->getOpenpayInstance();                          
-            $order = $this->orderRepository->get($this->checkoutSession->getLastOrderId());        
+            $order = $this->orderRepository->get($order_id);        
             $customer_id = $order->getExtCustomerId();
 
             if ($customer_id) {
@@ -88,9 +98,9 @@ class Success extends \Magento\Framework\App\Action\Action
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Canceled by customer.'));
                 $order->save();
 
-                $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/cart'));
-
-                return $this->resultRedirectFactory->create()->setPath('checkout/cart');            
+                $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/onepage/failure'));
+                
+                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/failure');            
             }
 
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
@@ -109,15 +119,15 @@ class Success extends \Magento\Framework\App\Action\Action
             $payment->setAmountPaid($charge->amount);
             $payment->setIsTransactionPending(false);
             $payment->save();
-
-            $this->checkoutSession->clearQuote();
-
-            $this->logger->debug('#SUCCESS', array('redirect' => 'sales/order/history'));
-            return $this->resultRedirectFactory->create()->setPath('sales/order/history');
+            
+            $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/onepage/success'));
+            return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
             
         } catch (\Exception $e) {
             $this->logger->error('#SUCCESS', array('message' => $e->getMessage(), 'code' => $e->getCode(), 'line' => $e->getLine(), 'trace' => $e->getTraceAsString()));
-            throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+            //throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
+        
+        return $this->resultRedirectFactory->create()->setPath('checkout/cart'); 
     }
 }
