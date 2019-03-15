@@ -341,6 +341,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->logger->debug('#processCapture', array('$openpay_cc' => $openpay_cc, '$save_cc' => $save_cc, '$device_session_id' => $device_session_id));        
                                 
         $customer_data = array(
+            'requires_account' => false,
             'name' => $billing->getFirstname(),
             'last_name' => $billing->getLastname(),
             'phone_number' => $billing->getTelephone(),
