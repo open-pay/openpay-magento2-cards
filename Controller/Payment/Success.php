@@ -95,12 +95,12 @@ class Success extends \Magento\Framework\App\Action\Action
 
             if ($order && $charge->status != 'completed') {
                 $order->cancel();
-                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Canceled by customer.'));
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Autenticación de 3D Secure fallida.'));
                 $order->save();
 
-                $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/onepage/failure'));
-                
-                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/failure');            
+                $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
+                                
+                return $this->resultPageFactory->create();        
             }
 
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;

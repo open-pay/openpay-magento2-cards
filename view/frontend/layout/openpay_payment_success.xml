@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <title>Autenticación de 3D Secure fallida</title>
+    </head>
+    <referenceContainer name="content">
+        <block class="Openpay\Cards\Block\Success" name="error_3d_secure" template="Openpay_Cards::success.phtml" />
+    </referenceContainer>
+</page>
