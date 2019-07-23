@@ -12,6 +12,8 @@ namespace Openpay\Cards\Controller\Payment;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
+use Magento\Sales\Model\ResourceModel\Order\Invoice\Collection as InvoiceCollection;
+use Magento\Sales\Model\Order\Invoice;
 
 /**
  * Webhook class  
@@ -109,11 +111,30 @@ class Success extends \Magento\Framework\App\Action\Action
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
             $order->save();        
 
-            $invoice = $this->_invoiceService->prepareInvoice($order);        
-            $invoice->setTransactionId($charge->id);
+            $requiresInvoice = true;
+            /** @var InvoiceCollection $invoiceCollection */
+            $invoiceCollection = $order->getInvoiceCollection();
+            if ( $invoiceCollection->count() > 0 ) {
+
+                /** @var Invoice $invoice */
+                foreach ($invoiceCollection as $invoice ) {
+                    if ( $invoice->getState() == Invoice::STATE_OPEN) {
+                        $invoice->setState(Invoice::STATE_PAID);
+                        $invoice->setTransactionId($charge->id);
+                        $invoice->pay()->save();
+                        $requiresInvoice = false;
+                        break;
+                    }
+                }
+            }
+
+            if ( $requiresInvoice ) {
+                $invoice = $this->_invoiceService->prepareInvoice($order);
+                $invoice->setTransactionId($charge->id);
 //            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-//            $invoice->register();            
-            $invoice->pay()->save();
+//            $invoice->register();
+                $invoice->pay()->save();
+            }
 
             $payment = $order->getPayment();                                
             $payment->setAmountPaid($charge->amount);
