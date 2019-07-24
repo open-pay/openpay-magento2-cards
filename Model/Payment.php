@@ -382,6 +382,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         if ($this->charge_type == '3d') {
             $charge_request['use_3d_secure'] = true;
             $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
+        } elseif ($this->charge_type == 'auth') {
+            $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
         }
                 
         try {                           
