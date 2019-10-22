@@ -61,6 +61,23 @@
                     <p class="openpay-total" style="font-size: 2em; font-weight: bold;">$<span id="monthly-payment">100</span></p>
                 </div>                
             </div>    
+            
+            <div class="fieldset" data-bind="visible: showInstallments()">                
+                <div class="field type">
+                    <label class="label" for="openpay_installments" style="font-weight: 600; margin-bottom: 5px;">Pago en cuotas</label>
+                    <div class="control">
+                        <select id="installments" name="installments" class="select" style="width: auto;" data-bind="options: getInstallments(), 
+                       optionsText: function(installment) {
+                           return installment > 1 ? installment +' cuotas' : 'Una sola cuota';
+                       }"></select>
+                    </div>                    
+                </div>     
+                <div id="total-monthly-payment" class="field type" style="display: none;">
+                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>                
+                    <p class="openpay-total" style="font-size: 2em; font-weight: bold;">$<span id="monthly-payment">100</span></p>
+                </div>                
+            </div>    
+            
         </form>
 
         <div class="checkout-agreements-block">

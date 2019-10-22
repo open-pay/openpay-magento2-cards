@@ -42,7 +42,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $_canAuthorize = true;
     protected $_canVoid = true;
     protected $openpay = false;
-    protected $is_sandbox;
+    protected $is_sandbox;    
+    protected $country;
     protected $use_card_points;
     protected $merchant_id = null;
     protected $pk = null;
@@ -61,7 +62,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $logger;
     protected $_storeManager;
     protected $save_cc;
-    
+    protected $installments;
+    protected $iva = 0;
+
     /**
      * @var Customer
      */
@@ -126,6 +129,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         $this->is_active = $this->getConfigData('active');
         $this->is_sandbox = $this->getConfigData('is_sandbox');
+        $this->country = $this->getConfigData('country');
+        
         $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
         $this->sandbox_sk = $this->getConfigData('sandbox_sk');
         $this->sandbox_pk = $this->getConfigData('sandbox_pk');
@@ -136,11 +141,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
-        $this->months_interest_free = $this->getConfigData('interest_free');
-        $this->charge_type = $this->getConfigData('charge_type');
-        //$this->minimum_amount = $this->getConfigData('minimum_amount');
-        $this->use_card_points = $this->getConfigData('use_card_points');
+        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';
+        $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';        
+        $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
+        $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
         $this->save_cc = $this->getConfigData('save_cc');
+        $this->installments = $this->country === 'CO' ? $this->getConfigData('installments') : '1';
+        //$this->minimum_amount = $this->getConfigData('minimum_amount');
         
         $this->openpay = $openpay;
     }
@@ -186,20 +193,19 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         );
         $infoInstance->setAdditionalInformation('interest_free',
             isset($additionalData['interest_free']) ? $additionalData['interest_free'] : null
-        );
-        
+        );        
         $infoInstance->setAdditionalInformation('use_card_points',
             isset($additionalData['use_card_points']) ? $additionalData['use_card_points'] : null
-        );
-        
+        );        
         $infoInstance->setAdditionalInformation('save_cc',
             isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
-        );
-        
+        );        
         $infoInstance->setAdditionalInformation('openpay_cc',
             isset($additionalData['openpay_cc']) ? $additionalData['openpay_cc'] : null
         );
-        
+        $infoInstance->setAdditionalInformation('installments',
+            isset($additionalData['installments']) ? $additionalData['installments'] : null
+        );
         return $this;
     }
     
@@ -371,11 +377,22 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             'use_card_points' => $use_card_points,  
             'capture' => $capture
         );
+        
+        if ($this->country === 'CO') {
+            $charge_request['iva'] = $this->iva;
+        }
 
-        // Meses sin intereses
+        // Meses sin intereses (solo para MX)
         $interest_free = $this->getInfoInstance()->getAdditionalInformation('interest_free');
-        if($interest_free > 1){
+        if($interest_free > 1 && $this->country === 'MX'){
             $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
+        }  
+        
+        // Pago en cuotas (solo para CO)
+        $installments = $this->getInfoInstance()->getAdditionalInformation('installments');
+        $this->logger->debug('#installments', array('$installments' => $installments));        
+        if($installments > 1 && $this->country === 'CO'){
+            $charge_request['payment_plan'] = array('payments' => (int)$installments);
         }  
 
         // 3D Secure
@@ -640,10 +657,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return bool
      */
     public function canUseForCurrency($currencyCode) {
-        if (!in_array($currencyCode, $this->supported_currency_codes)) {
-            return false;
+        if ($this->country === 'MX') {
+            return in_array($currencyCode, $this->supported_currency_codes);
+        } else if ($this->country === 'CO') {
+            return $currencyCode == 'COP';
         }
-        return true;
+        
+        return false;
     }
 
     /**
@@ -671,6 +691,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $this->is_sandbox;
     }
     
+    public function getCountry() {
+        return $this->country;
+    }
+
+
 //    public function getMinimumAmount() {
 //        return $this->minimum_amount;
 //    }
@@ -685,12 +710,21 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $openpay;
     }
     
-    public function getMonthsInterestFree() {
+    public function getMonthsInterestFree() {        
         $months = explode(',', $this->months_interest_free);                  
         if(!in_array('1', $months)) {            
             array_unshift($months, '1');
         }        
         return $months;
+    }
+    
+    public function getInstallments() {        
+        $installments = explode(',', $this->installments);                  
+        if(!in_array('1', $installments)) {            
+            array_unshift($installments, '1');
+        }        
+        
+        return $installments;
     }
     
     public function useCardPoints() {
