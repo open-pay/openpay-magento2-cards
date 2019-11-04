@@ -355,14 +355,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         );
 
         if ($this->validateAddress($billing)) {
-            $customer_data['address'] = array(
-                'line1' => $billing->getStreetLine(1),
-                'line2' => $billing->getStreetLine(2),
-                'postal_code' => $billing->getPostcode(),
-                'city' => $billing->getCity(),
-                'state' => $billing->getRegion(),
-                'country_code' => $billing->getCountryId()
-            );
+            $customer_data = $this->formatAddress($customer_data, $billing);
         }
         
         $charge_request = array(
@@ -466,6 +459,27 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
         
         return $this;
+    }
+    
+    private function formatAddress($customer_data, $billing) {
+        if ($this->country === 'MX') {
+            $customer_data['address'] = array(
+                'line1' => $billing->getStreetLine(1),
+                'line2' => $billing->getStreetLine(2),
+                'postal_code' => $billing->getPostcode(),
+                'city' => $billing->getCity(),
+                'state' => $billing->getRegion(),
+                'country_code' => $billing->getCountryId()
+            );
+        } else if ($this->country === 'CO') {
+            $customer_data['customer_address'] = array(
+                'department' => $billing->getRegion(),
+                'city' => $billing->getCity(),
+                'additional' => $billing->getStreetLine(1).' '.$billing->getStreetLine(2)
+            );
+        }
+        
+        return $customer_data;
     }
     
     private function getCCBrandCode($brand) {
