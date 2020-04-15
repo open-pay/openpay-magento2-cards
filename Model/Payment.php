@@ -321,6 +321,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         unset($_SESSION['pdf_url']);
         unset($_SESSION['show_map']);
         unset($_SESSION['openpay_3d_secure_url']);
+        unset($_SESSION['openpay_pse_redirect_url']);
         
         $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);  // URL de la tienda        
         

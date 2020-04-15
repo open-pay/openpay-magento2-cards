@@ -120,6 +120,7 @@
                 <field id="iva" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>IVA</label>            
                     <validate>required-entry validate-zero-or-greater validate-digits</validate>
+                    <comment>Debe contener el valor de IVA, es campo solo informativo, no tiene ningún efecto sobre el campo amount.</comment>
                     <depends>
                         <field id="country">CO</field>
                     </depends>                       
