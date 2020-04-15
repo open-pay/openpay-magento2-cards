@@ -61,6 +61,10 @@ define(
                 return window.checkoutConfig.payment.months_interest_free;                
             },
             
+            getInstallments: function() {
+                return window.checkoutConfig.payment.installments;                
+            },
+            
             creditCardOption: function() {
                 console.log('#openpay_cc', $('#openpay_cc').val());                  
                 if ($('#openpay_cc').val() !== "new") {                                 
@@ -89,6 +93,10 @@ define(
                 return months.length > 1 ? true : false;                
             },
             
+            showInstallments: function() {
+                var installments = window.checkoutConfig.payment.installments;                                                         
+                return installments.length > 1 ? true : false;                
+            },            
             canSaveCC: function() {
                 return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;                
             },
@@ -194,6 +202,7 @@ define(
                         'cc_number': this.creditCardNumber(),
                         'openpay_token': $("#openpay_token").val(),
                         'device_session_id': $('#device_session_id').val(),
+                        'installments': $('#installments').val(),
                         'interest_free': $('#interest_free').val(),
                         'use_card_points': $('#use_card_points').val(),
                         'save_cc': $("#save_cc").is(':checked') ? '1' : '0',

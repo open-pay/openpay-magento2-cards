@@ -6,21 +6,17 @@
  * @copyright   Openpay (http://openpay.mx)
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
-
 namespace Openpay\Cards\Controller\Payment;
-
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
 use Magento\Sales\Model\ResourceModel\Order\Invoice\Collection as InvoiceCollection;
 use Magento\Sales\Model\Order\Invoice;
-
 /**
  * Webhook class  
  */
 class Success extends \Magento\Framework\App\Action\Action
 {
-
     protected $resultPageFactory;
     protected $request;
     protected $payment;
@@ -62,7 +58,6 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->_invoiceService = $invoiceService;
         $this->transactionBuilder = $transactionBuilder;
     }
-
     /**
      * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
      * URL /openpay/payment/success
@@ -85,37 +80,30 @@ class Success extends \Magento\Framework\App\Action\Action
             $openpay = $this->payment->getOpenpayInstance();                          
             $order = $this->orderRepository->get($order_id);        
             $customer_id = $order->getExtCustomerId();
-
             if ($customer_id) {
                 $customer = $this->payment->getOpenpayCustomer($customer_id);
                 $charge = $customer->charges->get($this->request->getParam('id'));
             } else {
                 $charge = $openpay->charges->get($this->request->getParam('id'));
             }
-
             $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
-
             if ($order && $charge->status != 'completed') {
                 $order->cancel();
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Autenticación de 3D Secure fallida.'));
                 $order->save();
-
                 $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
                                 
                 return $this->resultPageFactory->create();        
             }
-
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);  
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
             $order->save();        
-
             $requiresInvoice = true;
             /** @var InvoiceCollection $invoiceCollection */
             $invoiceCollection = $order->getInvoiceCollection();
             if ( $invoiceCollection->count() > 0 ) {
-
                 /** @var Invoice $invoice */
                 foreach ($invoiceCollection as $invoice ) {
                     if ( $invoice->getState() == Invoice::STATE_OPEN) {
@@ -127,7 +115,6 @@ class Success extends \Magento\Framework\App\Action\Action
                     }
                 }
             }
-
             if ( $requiresInvoice ) {
                 $invoice = $this->_invoiceService->prepareInvoice($order);
                 $invoice->setTransactionId($charge->id);
@@ -135,7 +122,6 @@ class Success extends \Magento\Framework\App\Action\Action
 //            $invoice->register();
                 $invoice->pay()->save();
             }
-
             $payment = $order->getPayment();                                
             $payment->setAmountPaid($charge->amount);
             $payment->setIsTransactionPending(false);
