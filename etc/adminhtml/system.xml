@@ -26,72 +26,122 @@
                     <label>Sandbox</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="title" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="country" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>País</label>
+                    <source_model>Openpay\Cards\Model\Source\Countries::getOptions</source_model>                    
+                </field>  
+                <field id="title" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Título</label>
                 </field>
-                <field id="sandbox_merchant_id" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Sandbox Merchant ID</label>                    
+                <field id="sandbox_merchant_id" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sandbox Merchant ID</label>     
+                    <depends>
+                        <field id="is_sandbox">1</field>
+                    </depends>               
                 </field>
-                <field id="sandbox_sk" translate="label" type="obscure" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sandbox_sk" translate="label" type="obscure" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sandbox Llave Secreta</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <depends>
+                        <field id="is_sandbox">1</field>
+                    </depends>               
                 </field>
-                <field id="sandbox_pk" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Sandbox Llave Pública</label>                    
+                <field id="sandbox_pk" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sandbox Llave Pública</label>            
+                    <depends>
+                        <field id="is_sandbox">1</field>
+                    </depends>                       
                 </field>
-                <field id="live_merchant_id" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Producción Merchant ID</label>                    
+                <field id="live_merchant_id" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Producción Merchant ID</label>   
+                    <depends>
+                        <field id="is_sandbox">0</field>
+                    </depends>                                
                 </field>
-                <field id="live_sk" translate="label" type="obscure" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="live_sk" translate="label" type="obscure" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Producción Llave Secreta</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <depends>
+                        <field id="is_sandbox">0</field>
+                    </depends>                                
                 </field>
-                <field id="live_pk" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Producción Llave Pública</label>                    
+                <field id="live_pk" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Producción Llave Pública</label>   
+                    <depends>
+                        <field id="is_sandbox">0</field>
+                    </depends>                                                 
                 </field>   
                 <!--<field id="order_status" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Estatus de la orden</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>                    
                 </field>-->
-                <field id="charge_type" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="charge_type" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>¿Cómo procesar el cargo?</label>
                     <source_model>Openpay\Cards\Model\Source\ChargeTypes::getTypes</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>¿Qué es la autenticación selectiva? Es cuando se detecta riesgo en la transacción y se manda por 3D Secure.</comment>
                 </field>  
-                <field id="payment_action" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="payment_action" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Configuración del cargo</label>
                     <source_model>Openpay\Cards\Model\Source\PaymentAction</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>Indica si el cargo se hace o no inmediatamente, con la pre-autorización solo se reserva el monto para ser confirmado o cancelado posteriormente. Las pre-autorizaciones no pueden ser utilizadas en combinación con pago con puntos Bancomer.</comment>
                 </field>   
-                <field id="use_card_points" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="use_card_points" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Pago con puntos</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>Recibe pagos con puntos Bancomer habilitando esta opción. Esta opción no se puede combinar con pre-autorizaciones o MSI.</comment>
                 </field>
-                <field id="save_cc" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="save_cc" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Guardar tarjetas</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
                 </field>   
-                <field id="cctypes" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes" translate="label" type="multiselect" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype</source_model>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>   
-                <field id="interest_free" translate="label" type="multiselect" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="interest_free" translate="label" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Meses sin Intereses</label>
                     <source_model>Openpay\Cards\Model\Source\MonthsInterestFree::getMonths</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción, esta opción no se puede combinar con pago con puntos. Recomendamos revises la documentación de los MSI (https://www.openpay.mx/costos.html).</comment>
-                </field>                                   
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                </field>   
+                <field id="iva" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>IVA</label>            
+                    <validate>required-entry validate-zero-or-greater validate-digits</validate>
+                    <comment>Debe contener el valor de IVA, es campo solo informativo, no tiene ningún efecto sobre el campo amount.</comment>
+                    <depends>
+                        <field id="country">CO</field>
+                    </depends>                       
+                </field>  
+                <field id="installments" translate="label" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Cuotas</label>
+                    <source_model>Openpay\Cards\Model\Source\Installments::getOptions</source_model>
+                    <depends>
+                        <field id="country">CO</field>
+                    </depends>
+                    <comment>Presione ctrl y clic para seleccionar más de una opción.</comment>
+                </field>                                
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago aplicable para países</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago para países específicos</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>    
-                <field id="sort_order" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sort_order" translate="label" type="text" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
                 </field>                       
             </group>

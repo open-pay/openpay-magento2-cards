@@ -56,6 +56,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 
                 $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSandbox());                 
                 $config['payment']['months_interest_free'] = $this->payment->getMonthsInterestFree();
+                $config['payment']['installments'] = $this->payment->getInstallments();
                 $config['payment']['use_card_points'] = $this->payment->useCardPoints();
                 $config['payment']['total'] = $this->cart->getQuote()->getGrandTotal();
                 $config['payment']['can_save_cc'] = $this->payment->canSaveCC();
