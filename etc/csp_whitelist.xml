@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+         <policy id="script-src">
+            <values>
+                <value id="openpay-lib" type="host">*.s3.amazonaws.com</value>
+                <value id="analytics-google" type="host">*.google-analytics.com</value>
+                <value id="recaptcha-google" type="host">*.google.com/recaptcha/</value>
+                <value id="recaptcha-gstatic" type="host">*.gstatic.com/recaptcha/</value>
+            </values>
+        </policy>
+        <policy id="connect-src">
+            <values>
+                <value id="openpay" type="host">*.openpay.mx</value>
+            </values>
+        </policy>
+         <policy id="frame-src">
+            <values>
+                <value id="openpay-paynet" type="host">*.opencontrol.mx</value>
+                <value id="kaptcha" type="host">*.kaptcha.com</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>
