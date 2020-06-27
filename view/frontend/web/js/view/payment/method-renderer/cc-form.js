@@ -233,7 +233,7 @@ define(
                   return false;
                 }
 
-                if(typeof customerData.postcode === 'undefined' || customerData.postcode.length === 0) {
+                if(typeof customerData.postcode === 'undefined' || customerData.postcode === null || customerData.postcode.length === 0) {
                   return false;
                 }
 

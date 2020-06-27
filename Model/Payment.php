@@ -816,7 +816,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return boolean
      */
     public function validateAddress($billing) {
-        if ($billing->getStreetLine(1) && $billing->getCity() && $billing->getPostcode() && $billing->getRegion() && $billing->getCountryId()) {
+        if ($billing->getCountryId() === 'MX' && $billing->getStreetLine(1) && $billing->getCity() && $billing->getPostcode() && $billing->getRegion()) {
+            return true;
+        } else if ($billing->getCountryId() === 'CO' && $billing->getStreetLine(1) && $billing->getCity() && $billing->getRegion()) {
             return true;
         }
         return false;
