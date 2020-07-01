@@ -339,6 +339,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $use_card_points = $this->getInfoInstance()->getAdditionalInformation('use_card_points');
         $save_cc = $this->getInfoInstance()->getAdditionalInformation('save_cc');
         $openpay_cc = $this->getInfoInstance()->getAdditionalInformation('openpay_cc');
+        $cvv2 = $this->getInfoInstance()->getAdditionalInformation('cc_cid');
         
         if (!$token && (!$openpay_cc || $openpay_cc == 'new')) {
             $msg = 'ERROR 100 Please specify card info';
@@ -393,6 +394,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         if ($this->charge_type == '3d') {
             $charge_request['use_3d_secure'] = true;
             $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
+        }
+
+        // cvv2
+        if ($this->country === 'CO' && $save_cc == '0' && $openpay_cc != 'new') {
+            $charge_request['cvv2'] = $cvv2;                    
         }
                 
         try {                           
