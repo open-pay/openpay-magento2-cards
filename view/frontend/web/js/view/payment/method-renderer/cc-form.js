@@ -66,6 +66,7 @@ define(
             },
             
             creditCardOption: function() {
+                customerData = quote.billingAddress._latestValue;
                 console.log('#openpay_cc', $('#openpay_cc').val());                  
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
@@ -77,9 +78,17 @@ define(
                     $('#openpay_cards_cc_cid').val("");                                                         
                     
                     $('#save_cc_fieldset').hide();                    
-                    $('#payment_form_openpay_cards').hide();
+                    if (customerData.countryId === 'MX') {
+                        $('#payment_form_openpay_cards').hide();
+                    }else if(customerData.countryId === 'CO'){
+                        $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
+                    }
                 } else {                    
-                    $('#payment_form_openpay_cards').show();
+                    if (customerData.countryId === 'MX') {
+                        $('#payment_form_openpay_cards').show();
+                    }else if(customerData.countryId === 'CO'){
+                        $('#payment_form_openpay_cards > div').show();
+                    }
                     $('#save_cc_fieldset').show();
                     $('#save_cc').prop('disabled', false);
                 }
@@ -211,12 +220,19 @@ define(
                 };
             },
             validate: function() {
-                if ($('#openpay_cc').val() !== 'new') {
-                    console.log('validate', $('#openpay_cc').val());
-                    return true;
+                customerData = quote.billingAddress._latestValue;
+                var $form = $('#' + this.getCode() + '-form');
+                if(typeof customerData.countryId === 'undefined' || customerData.countryId.length === 0) {
+                    return false;
                 }
-                
-                var $form = $('#' + this.getCode() + '-form');                
+                if($('#openpay_cc').val() !== 'new'){
+                    if (customerData.countryId === 'MX') {
+                        return true;
+                    }else if(customerData.countryId === 'CO'){
+                        $('.field.number').removeClass("required");
+                        $("#openpay_cards_cc_type_exp_div").removeClass("required");
+                    } 
+                }              
                 return $form.validation() && $form.validation('isValid');
             },
             getCustomerFullName: function() {             
