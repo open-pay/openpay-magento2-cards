@@ -203,6 +203,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance->setAdditionalInformation('openpay_cc',
             isset($additionalData['openpay_cc']) ? $additionalData['openpay_cc'] : null
         );
+        $infoInstance->setAdditionalInformation('cc_cid',
+            isset($additionalData['cc_cid']) ? $additionalData['cc_cid'] : null
+        );
         $infoInstance->setAdditionalInformation('installments',
             isset($additionalData['installments']) ? $additionalData['installments'] : null
         );
