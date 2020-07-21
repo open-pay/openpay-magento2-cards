@@ -130,6 +130,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->is_active = $this->getConfigData('active');
         $this->is_sandbox = $this->getConfigData('is_sandbox');
         $this->country = $this->getConfigData('country');
+
+        $this->_canRefund = $this->country === 'MX' ? true : false;
+        $this->_canRefundInvoicePartial = $this->country === 'MX' ? true : false;
         
         $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
         $this->sandbox_sk = $this->getConfigData('sandbox_sk');
