@@ -27,6 +27,9 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
 
+use Openpay\Data\Openpay;
+use Openpay\Data\OpenpayApiTransactionError;
+
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
 
@@ -105,7 +108,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ModuleListInterface $moduleList, 
             TimezoneInterface $localeDate, 
             CountryFactory $countryFactory, 
-            \Openpay $openpay,             
+            Openpay $openpay,             
             \Psr\Log\LoggerInterface $logger_interface,            
             Customer $customerModel,
             CustomerSession $customerSession,            
@@ -435,7 +438,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             
             $this->logger->debug('#saveOrder');        
             
-        } catch (\OpenpayApiTransactionError $e) {                        
+        } catch (OpenpayApiTransactionError $e) {                        
             $this->logger->error('OpenpayApiTransactionError', array('message' => $e->getMessage(), 'code' => $e->getErrorCode(), '$status' => $order->getStatus()));
             
             // Si hubo riesgo de fraude y el usuario definió autenticación selectiva, se envía por 3D secure
@@ -732,11 +735,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getOpenpayInstance() {
-        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
-        \Openpay::setSandboxMode($this->is_sandbox);
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk);
+        Openpay::setSandboxMode($this->is_sandbox);
         
         $userAgent = "Openpay-MTO2".$this->country."/v2";
-        \Openpay::setUserAgent($userAgent);
+        Openpay::setUserAgent($userAgent);
         
         return $openpay;
     }
