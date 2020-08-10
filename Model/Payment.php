@@ -732,7 +732,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getOpenpayInstance() {
-        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk);
+        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
         \Openpay::setSandboxMode($this->is_sandbox);
         
         $userAgent = "Openpay-MTO2".$this->country."/v2";
