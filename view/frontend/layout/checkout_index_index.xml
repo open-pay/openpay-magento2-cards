@@ -12,12 +12,15 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>    
-        <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js" src_type="url" />        
-        <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js" src_type="url" />    
+        <!--script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js" src_type="url" />        
+        <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js" src_type="url" /-->    
         <css src="Openpay_Cards::css/bootstrap.css" />            
         <!-- <script src="Openpay_Cards::js/bootstrap.js"/> -->
     </head>
     <body>
+        <referenceBlock name="head.additional">
+            <block class="Magento\Framework\View\Element\Template" name="custom_head_file" template="Openpay_Cards::custom_head.phtml"/>
+        </referenceBlock>
         <referenceBlock name="checkout.root">
             <arguments>
                 <argument name="jsLayout" xsi:type="array">

@@ -1,0 +1,16 @@
+<?php 
+
+    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    $model = $objectManager->create('Openpay\Cards\Model\Payment');
+
+    $country = $model->getCountry();
+
+?>
+
+<?php if($country == 'MX') : ?>
+    <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js" src_type="url"></script>        
+    <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js" src_type="url"></script> 
+<?php elseif($country == 'CO'): ?>
+    <script src="https://resources.openpay.co/openpay.v1.min.js" src_type="url"></script>        
+    <script src="https://resources.openpay.co/openpay-data.v1.min.js" src_type="url"></script>
+<?php endif; ?>
