@@ -62,6 +62,8 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 $config['payment']['can_save_cc'] = $this->payment->canSaveCC();
                 $config['payment']['cc_list'] = $this->payment->getCreditCardList();
                 $config['payment']['is_logged_in'] = $this->payment->isLoggedIn();
+                $config['payment']['url_store'] = $this->payment->getBaseUrlStore();
+                $config['payment']['country'] = $this->payment->getCountry();
                                 
                 $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard"); 
                 $config['payment']['ccform']["hasVerification"][$code] = true;

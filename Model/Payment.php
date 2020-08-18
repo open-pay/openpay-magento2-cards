@@ -663,6 +663,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }        
     }
     
+    public function getBaseUrlStore(){
+        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        return $base_url;
+    }
+    
     public function isLoggedIn() {
         return $this->customerSession->isLoggedIn();
     }
