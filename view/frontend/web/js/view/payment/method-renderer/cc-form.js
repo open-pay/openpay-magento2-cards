@@ -24,8 +24,48 @@ define(
         //console.log(customer.customerData);
         //console.log(quote.billingAddress._latestValue);
         var customerData = null; 
-        var total = window.checkoutConfig.payment.total;        
+        var total = window.checkoutConfig.payment.total;
+        var cardBin = null;        
         
+        $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
+            var card = $(this).val();
+            var urlStore = window.checkoutConfig.payment.url_store;
+            var months = window.checkoutConfig.payment.months_interest_free;
+            var country = window.checkoutConfig.payment.country;
+            var bin = null;                   
+            if(country == 'MX' && card.length >= 6 && months.length > 1){
+                var bin = card.substring(0, 6);
+                if(bin != cardBin){
+                    cardBin = bin;
+                    $.ajax({
+                        url : urlStore+'openpay/payment/getTypeCard',
+                        type : 'POST',
+                        showLoader: true,
+                        data: {
+                            card_bin: cardBin,
+                        },
+                        dataType:'json',
+                        success : function(data) {
+                            if(data === 'CREDIT'){
+                                $("#openpay_cards_interest_free").show();
+                            }else{
+                                $("#openpay_cards_interest_free").hide();
+                                $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                                $("#total-monthly-payment").hide();
+                            }
+                        },
+                        error : function(request,error)
+                        {
+                            console.log("Error");
+                            $("#openpay_cards_interest_free").hide();
+                            $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                            $("#total-monthly-payment").hide();
+                        }
+                    });
+                }
+            }
+        });
+
         $(document).on("change", "#interest_free", function() {        
             var monthly_payment = 0;
             var months = parseInt($(this).val());     
@@ -67,7 +107,41 @@ define(
             
             creditCardOption: function() {
                 customerData = quote.billingAddress._latestValue;
-                console.log('#openpay_cc', $('#openpay_cc').val());                  
+                console.log('#openpay_cc', $('#openpay_cc').val());
+                var card = $( "#openpay_cc option:selected" ).text();
+                card = card.substring(card.length-16);
+                var urlStore = window.checkoutConfig.payment.url_store;
+                var months = window.checkoutConfig.payment.months_interest_free;
+                var country = window.checkoutConfig.payment.country;
+                
+                if(country == 'MX' && months.length > 1){
+                    var bin = card.substring(0, 6);
+                    $.ajax({
+                        url : urlStore+'openpay/payment/getTypeCard',
+                        type : 'POST',
+                        showLoader: true,
+                        data: {
+                            card_bin: bin,
+                        },
+                        dataType:'json',
+                        success : function(data) {
+                            if(data === 'CREDIT'){
+                                $("#openpay_cards_interest_free").show();
+                            }else{
+                                $("#openpay_cards_interest_free").hide();
+                                $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                                $("#total-monthly-payment").hide();
+                            }
+                        },
+                        error : function(request,error)
+                        {
+                            console.log("Error");
+                            $("#openpay_cards_interest_free").hide();
+                            $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                            $("#total-monthly-payment").hide();
+                        }
+                    });
+                }
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
                     $('#save_cc').prop('disabled', true);                 
@@ -78,15 +152,15 @@ define(
                     $('#openpay_cards_cc_cid').val("");                                                         
                     
                     $('#save_cc_fieldset').hide();                    
-                    if (customerData.countryId === 'MX') {
+                    if (country === 'MX') {
                         $('#payment_form_openpay_cards').hide();
-                    }else if(customerData.countryId === 'CO'){
+                    }else if(country === 'CO'){
                         $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
                     }
                 } else {                    
-                    if (customerData.countryId === 'MX') {
+                    if (country === 'MX') {
                         $('#payment_form_openpay_cards').show();
-                    }else if(customerData.countryId === 'CO'){
+                    }else if(country === 'CO'){
                         $('#payment_form_openpay_cards > div').show();
                     }
                     $('#save_cc_fieldset').show();
