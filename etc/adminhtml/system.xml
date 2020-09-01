@@ -116,7 +116,60 @@
                         <field id="country">MX</field>
                     </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción, esta opción no se puede combinar con pago con puntos. Recomendamos revises la documentación de los MSI (https://www.openpay.mx/costos.html).</comment>
-                </field>   
+                </field>
+                <field id="minimum_amounts" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Configurar Montos Mínimos MSI</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Configuración de montos mínimos para promociones a MSI</comment>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
+                </field>
+                <field id="three_months" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>3 Meses</label>            
+                    <validate>required-entry validate-digits validate-digits-range digits-range-300-99999</validate>
+                     <depends>
+                        <field id="country">MX</field>
+                        <field id="minimum_amounts">1</field>
+                    </depends>
+                    <comment>Monto mínimo por default $300. El monto deberá ser mayor al asignado por default</comment>                 
+                </field>
+                <field id="six_months" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>6 Meses</label>            
+                    <validate>required-entry validate-digits validate-digits-range digits-range-600-99999</validate>
+                     <depends>
+                        <field id="country">MX</field>
+                        <field id="minimum_amounts">1</field>
+                    </depends>
+                    <comment>Monto mínimo por default $600. El monto deberá ser mayor al asignado por default</comment>                 
+                </field>
+                <field id="nine_months" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>9 Meses</label>            
+                    <validate>required-entry validate-digits validate-digits-range digits-range-900-99999</validate>
+                     <depends>
+                        <field id="country">MX</field>
+                        <field id="minimum_amounts">1</field>
+                    </depends>
+                    <comment>Monto mínimo por default $900. El monto deberá ser mayor al asignado por default</comment>                 
+                </field>
+                <field id="twelve_months" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>12 Meses</label>            
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1200-99999</validate>
+                     <depends>
+                        <field id="country">MX</field>
+                        <field id="minimum_amounts">1</field>
+                    </depends>
+                    <comment>Monto mínimo por default $1200. El monto deberá ser mayor al asignado por default</comment>                 
+                </field>
+                <field id="eighteen_months" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>18 Meses</label>            
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1800-99999</validate>
+                     <depends>
+                        <field id="country">MX</field>
+                        <field id="minimum_amounts">1</field>
+                    </depends>
+                    <comment>Monto mínimo por default $1800. El monto deberá ser mayor al asignado por default</comment>                 
+                </field>
                 <field id="iva" translate="label" type="text" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>IVA</label>            
                     <validate>required-entry validate-zero-or-greater validate-digits</validate>

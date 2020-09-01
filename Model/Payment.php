@@ -64,6 +64,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $save_cc;
     protected $installments;
     protected $iva = 0;
+    protected $minimum_amounts = 0;
+    protected $config_months;
 
     /**
      * @var Customer
@@ -150,7 +152,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
         $this->save_cc = $this->getConfigData('save_cc');
         $this->installments = $this->country === 'CO' ? $this->getConfigData('installments') : '1';
-        //$this->minimum_amount = $this->getConfigData('minimum_amount');
+        $this->minimum_amounts = $this->getConfigData('minimum_amounts');
+        $this->config_months = $this->minimum_amounts ? array(
+                                        "3" => $this->getConfigData('three_months'),
+                                        "6" => $this->getConfigData('six_months'),
+                                        "9" => $this->getConfigData('nine_months'),
+                                        "12" => $this->getConfigData('twelve_months'),
+                                        "18" => $this->getConfigData('eighteen_months')
+        ) : null;
         
         $this->openpay = $openpay;
     }
@@ -746,8 +755,21 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $openpay;
     }
     
-    public function getMonthsInterestFree() {        
-        $months = explode(',', $this->months_interest_free);                  
+    public function getMonthsInterestFree() {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
+        $grandTotal = (int) $cart->getQuote()->getGrandTotal();    
+        $months = explode(',', $this->months_interest_free);
+        
+        if($this->minimum_amounts && $this->country == 'MX'){
+            foreach($months as $key => $value){
+                $msi_minimum_amount = (int) $this->config_months[$value];
+                if($grandTotal < $msi_minimum_amount){
+                    unset($months[$key]);
+                }
+            }
+        }
+        
         if(!in_array('1', $months)) {            
             array_unshift($months, '1');
         }        

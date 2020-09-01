@@ -37,8 +37,13 @@
                 <use_card_points>no</use_card_points>
                 <iva>0</iva>                
                 <installments>1</installments>
-                <allowspecific>0</allowspecific>                        
-                <!-- <minimum_amount>1800</minimum_amount> -->
+                <allowspecific>0</allowspecific>
+                <minimum_amounts>0</minimum_amounts>
+                <three_months>300</three_months>
+                <six_months>600</six_months>
+                <nine_months>900</nine_months>
+                <twelve_months>1200</twelve_months>
+                <eighteen_months>1800</eighteen_months>
             </openpay_cards>
         </payment>
     </default>
