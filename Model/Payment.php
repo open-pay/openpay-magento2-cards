@@ -18,6 +18,7 @@ use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Payment\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Payment\Model\Method\Logger;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -66,6 +67,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $iva = 0;
     protected $minimum_amounts = 0;
     protected $config_months;
+    protected $merchant_classification = '';
 
     /**
      * @var Customer
@@ -78,6 +80,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     
     protected $openpayCustomerFactory;
 
+    /**
+    *  @var \Magento\Framework\App\Config\Storage\WriterInterface
+    */
+    protected $configWriter;
 
     /**
      * 
@@ -94,6 +100,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param \Openpay $openpay
      * @param array $data
      * @param \Magento\Store\Model\StoreManagerInterface $data
+     * @param WriterInterface $configWriter
      */
     public function __construct(
             StoreManagerInterface $storeManager,
@@ -102,7 +109,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ExtensionAttributesFactory $extensionFactory, 
             AttributeValueFactory $customAttributeFactory, 
             Data $paymentData, 
-            ScopeConfigInterface $scopeConfig, 
+            ScopeConfigInterface $scopeConfig,
+            WriterInterface $configWriter,
             Logger $logger,
             ModuleListInterface $moduleList, 
             TimezoneInterface $localeDate, 
@@ -127,11 +135,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->logger = $logger_interface;
 
         $this->scopeConfig = $scopeConfig;
+        $this->configWriter = $configWriter;
         $this->country_factory = $countryFactory;
 
         $this->is_active = $this->getConfigData('active');
         $this->is_sandbox = $this->getConfigData('is_sandbox');
         $this->country = $this->getConfigData('country');
+        $this->merchant_classification = $this->getConfigData('merchant_classification');
 
         $this->_canRefund = $this->country === 'MX' ? true : false;
         $this->_canRefundInvoicePartial = $this->country === 'MX' ? true : false;
@@ -146,8 +156,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
-        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';
-        $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';        
+        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';        
         $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
         $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
         $this->save_cc = $this->getConfigData('save_cc');
@@ -160,8 +169,33 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "12" => $this->getConfigData('twelve_months'),
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
+        $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';
+        $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
         
+        $this->merchant_classification = $this->getMerchantInfo();
+        $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
+        $this->configWriter->save('payment/openpay_cards/merchant_classification',  $classification);
+
+
+        $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
+        
+
         $this->openpay = $openpay;
+
+        if($this->merchant_classification === 'eglobal'){
+            if(empty($this->getConfigData('affiliation_bbva'))){
+                $this->charge_type = '3d';
+                $this->configWriter->save('payment/openpay_cards/charge_type', '3d');
+                throw new \Magento\Framework\Validator\Exception(__("The bbva affiliation field is required."));
+            }
+        }else{
+            if(!empty($this->getConfigData('affiliation_bbva'))){
+                $this->charge_type = 'direct';
+                $this->affiliation_bbva = '';
+                $this->configWriter->save('payment/openpay_cards/affiliation_bbva', '');
+                $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
+            }
+        }
     }
     
     /**
@@ -387,6 +421,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             'use_card_points' => $use_card_points,  
             'capture' => $capture
         );
+        
+        if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
+            $charge_request['affiliation_bbva'] = $this->affiliation_bbva;
+        }
         
         if ($this->country === 'CO') {
             $charge_request['iva'] = $this->iva;
@@ -727,7 +765,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         } else if ($this->country === 'CO') {
             return $currencyCode == 'COP';
         }
-        
         return false;
     }
 
@@ -760,6 +797,21 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $this->country;
     }
 
+    public function getMerchantInfo() {
+        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+        \Openpay::setSandboxMode($this->is_sandbox);
+
+        try {
+            $merchantInfo = $openpay->getMerchantInfo(); 
+            $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
+            $classification = ($merchantInfo->classification === 'eglobal' ? 'BBVA' : 'Openpay');
+            $this->configWriter->save('payment/openpay_cards/merchant_classification', $classification);
+            return $merchantInfo->classification;
+        } catch (Exception $e) {
+            return $this->error($e);
+        }
+    }
+
 
 //    public function getMinimumAmount() {
 //        return $this->minimum_amount;
@@ -773,7 +825,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
         \Openpay::setSandboxMode($this->is_sandbox);
         
-        $userAgent = "Openpay-MTO2".$this->country."/v2";
+        if($this->merchant_classification === 'eglobal'){
+            \Openpay::setClassificationMerchant($this->merchant_classification);
+            $userAgent = "BBVA-MTO2".$this->country."/v1";
+        }else{
+            $userAgent = "Openpay-MTO2".$this->country."/v2";
+        }   
+
         \Openpay::setUserAgent($userAgent);
         
         return $openpay;
