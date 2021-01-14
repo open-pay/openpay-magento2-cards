@@ -65,7 +65,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 $config['payment']['url_store'] = $this->payment->getBaseUrlStore();
                 $config['payment']['country'] = $this->payment->getCountry();
                                 
-                $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard"); 
+                $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard", "CN" => "Carnet"); 
                 $config['payment']['ccform']["hasVerification"][$code] = true;
                 $config['payment']['ccform']["hasSsCardType"][$code] = false;
                 $config['payment']['ccform']["months"][$code] = $this->getMonths();
