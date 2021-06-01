@@ -746,7 +746,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getBaseUrlStore(){
-        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
         return $base_url;
     }
     
