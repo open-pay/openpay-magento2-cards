@@ -1,5 +1,5 @@
 {
-    "name": "openpay-tripuls/magento2-cards",
+    "name": "openpay/magento2-cards",
     "description": "Credit card payment integration for Magento 2",
     "type": "magento2-module",    
     "minimum-stability": "stable",    
