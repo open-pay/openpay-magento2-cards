@@ -25,6 +25,8 @@ class Success extends \Magento\Framework\App\Action\Action
     protected $logger;
     protected $_invoiceService;
     protected $transactionBuilder;
+    protected $orderSender;
+    protected $invoiceSender;
     
     /**
      * 
@@ -36,6 +38,10 @@ class Success extends \Magento\Framework\App\Action\Action
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Psr\Log\LoggerInterface $logger_interface
      * @param \Magento\Sales\Model\Service\InvoiceService $invoiceService
+     * @param \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder,
+     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+     * @param \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender
+     * 
      */
     public function __construct(
             Context $context, 
@@ -46,7 +52,9 @@ class Success extends \Magento\Framework\App\Action\Action
             \Magento\Checkout\Model\Session $checkoutSession,
             \Psr\Log\LoggerInterface $logger_interface,
             \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-            \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder
+            \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder,
+            \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+            \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
@@ -57,6 +65,8 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->logger = $logger_interface;        
         $this->_invoiceService = $invoiceService;
         $this->transactionBuilder = $transactionBuilder;
+        $this->orderSender = $orderSender;
+        $this->invoiceSender = $invoiceSender;
     }
     /**
      * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
@@ -71,6 +81,7 @@ class Success extends \Magento\Framework\App\Action\Action
             $quote_id = $this->checkoutSession->getLastQuoteId();
             
             $this->checkoutSession->setLastSuccessQuoteId($quote_id);
+            $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             
             $this->logger->debug('getLastQuoteId: '.$quote_id);
             $this->logger->debug('getLastOrderId: '.$order_id);
@@ -78,7 +89,10 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->logger->debug('getLastRealOrderId: '.$this->checkoutSession->getLastRealOrderId());        
             
             $openpay = $this->payment->getOpenpayInstance();                          
-            $order = $this->orderRepository->get($order_id);        
+            $order = $this->orderRepository->get($order_id);
+            
+            $this->orderSender->send($order, true);
+
             $customer_id = $order->getExtCustomerId();
             if ($customer_id) {
                 $customer = $this->payment->getOpenpayCustomer($customer_id);
@@ -110,6 +124,7 @@ class Success extends \Magento\Framework\App\Action\Action
                         $invoice->setState(Invoice::STATE_PAID);
                         $invoice->setTransactionId($charge->id);
                         $invoice->pay()->save();
+                        $this->invoiceSender->send($invoice, true);
                         $requiresInvoice = false;
                         break;
                     }
@@ -121,6 +136,7 @@ class Success extends \Magento\Framework\App\Action\Action
 //            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
 //            $invoice->register();
                 $invoice->pay()->save();
+                $this->invoiceSender->send($invoice, true);
             }
             $payment = $order->getPayment();                                
             $payment->setAmountPaid($charge->amount);
