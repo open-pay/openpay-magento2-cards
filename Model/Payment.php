@@ -474,11 +474,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $payment->setCcExpYear($charge->card->expiration_year);
                                                                                     
             if ($this->charge_type == '3d') {            
-                $status = 'pending_payment';
-                $order->setState($status);
-                $order->setStatus($status);
+                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+                $order->setState($status)->setStatus($status);
                 $order->setCanSendNewEmailFlag(false);
-                $payment->setIsTransactionPending(true);    
+                $payment->setIsTransactionPending(true); 
+                $payment->setIsTransactionClosed(false);                
                 $_SESSION['openpay_3d_secure_url'] = $charge->payment_method->url;
                 $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'openpay_status' => $charge->status));
             }
