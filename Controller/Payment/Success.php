@@ -89,7 +89,6 @@ class Success extends \Magento\Framework\App\Action\Action
             $quote_id = $this->checkoutSession->getLastQuoteId();
             
             $this->checkoutSession->setLastSuccessQuoteId($quote_id);
-            $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             
             $this->logger->debug('getLastQuoteId: '.$quote_id);
             $this->logger->debug('getLastOrderId: '.$order_id);
@@ -99,8 +98,6 @@ class Success extends \Magento\Framework\App\Action\Action
             $openpay = $this->payment->getOpenpayInstance();                          
             $order = $this->orderRepository->get($order_id);
             
-            $this->orderSender->send($order, true);
-
             $customer_id = $order->getExtCustomerId();
             if ($customer_id) {
                 $customer = $this->payment->getOpenpayCustomer($customer_id);
@@ -117,6 +114,9 @@ class Success extends \Magento\Framework\App\Action\Action
                                 
                 return $this->resultPageFactory->create();        
             }
+            $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
+            $this->orderSender->send($order, true);
+
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);  
