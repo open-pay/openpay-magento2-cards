@@ -27,6 +27,8 @@ class Success extends \Magento\Framework\App\Action\Action
     protected $transactionBuilder;
     protected $orderSender;
     protected $invoiceSender;
+    protected $transactionRepository;
+    protected $searchCriteriaBuilder;
     
     /**
      * 
@@ -38,9 +40,11 @@ class Success extends \Magento\Framework\App\Action\Action
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Psr\Log\LoggerInterface $logger_interface
      * @param \Magento\Sales\Model\Service\InvoiceService $invoiceService
-     * @param \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder,
-     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+     * @param \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder
+     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender
+     * @param \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository
+     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
      * 
      */
     public function __construct(
@@ -54,7 +58,9 @@ class Success extends \Magento\Framework\App\Action\Action
             \Magento\Sales\Model\Service\InvoiceService $invoiceService,
             \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder,
             \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
-            \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender
+            \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
+            \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
+            \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
@@ -67,6 +73,8 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->transactionBuilder = $transactionBuilder;
         $this->orderSender = $orderSender;
         $this->invoiceSender = $invoiceSender;
+        $this->transactionRepository = $transactionRepository;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
     }
     /**
      * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
@@ -114,6 +122,17 @@ class Success extends \Magento\Framework\App\Action\Action
             $order->setTotalPaid($charge->amount);  
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
             $order->save();        
+            
+            $this->searchCriteriaBuilder->addFilter('order_id', $order_id);
+            $list = $this->transactionRepository->getList(
+                $this->searchCriteriaBuilder->create()
+            );
+            $transactions =  $list->getItems();
+            foreach ($transactions as $transaction) {
+                $transaction->setIsClosed(true);
+                $transaction->save();
+            }
+
             $requiresInvoice = true;
             /** @var InvoiceCollection $invoiceCollection */
             $invoiceCollection = $order->getInvoiceCollection();
