@@ -518,7 +518,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url); 
                 $payment->setSkipOrderProcessing(true);                      
                 $payment->setIsTransactionPending(true);
-                $payment->setIsFraudDetected(true);
+                $payment->setIsTransactionPending(true);
+                $payment->setIsTransactionClosed(false);
+                $order->setCanSendNewEmailFlag(false); 
                 
                 $_SESSION['openpay_3d_secure_url'] = $charge->payment_method->url;
                 
