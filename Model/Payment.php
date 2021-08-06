@@ -505,9 +505,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                 
                 $charge = $this->makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc);
                 $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
-                                
+                $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
+                
                 $order->setExtOrderId($charge->id);
-                $order->setExtCustomerId($openpayCustomerFactory->openpay_id);
+                $order->setExtCustomerId($openpay_customer_id);
                 $order->save();
                 
                 $payment->setTransactionId($charge->id);      
@@ -517,7 +518,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $payment->setCcExpYear($charge->card->expiration_year);                
                 $payment->setAdditionalInformation('openpay_3d_secure_url', $charge->payment_method->url); 
                 $payment->setSkipOrderProcessing(true);                      
-                $payment->setIsTransactionPending(true);
                 $payment->setIsTransactionPending(true);
                 $payment->setIsTransactionClosed(false);
                 $order->setCanSendNewEmailFlag(false); 
