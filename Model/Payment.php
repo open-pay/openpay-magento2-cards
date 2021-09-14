@@ -24,6 +24,8 @@ use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Directory\Model\CountryFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use Openpay\Cards\Model\Utils\AddressFormat;
+use Openpay\Cards\Model\Utils\ProductFormat;
 
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -85,6 +87,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     */
     protected $configWriter;
 
+    protected $addressFormat;
+    protected $productFormat;
+
     /**
      * 
      * @param \Magento\Framework\Model\Context $context
@@ -101,6 +106,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param array $data
      * @param \Magento\Store\Model\StoreManagerInterface $data
      * @param WriterInterface $configWriter
+     * @param AddressFormat $addressFormat
+     * @param ProductFormat $productFormat
      */
     public function __construct(
             StoreManagerInterface $storeManager,
@@ -120,6 +127,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             Customer $customerModel,
             CustomerSession $customerSession,            
             \Openpay\Cards\Model\OpenpayCustomerFactory $openpayCustomerFactory,
+            AddressFormat $addressFormat,
+            ProductFormat $productFormat,
             array $data = array()            
     ) {
         
@@ -179,6 +188,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
         
+        $this->addressFormat = $addressFormat;
+        $this->productFormat = $productFormat;
 
         $this->openpay = $openpay;
 
@@ -391,6 +402,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         /** @var \Magento\Sales\Model\Order\Address $billing */
         $billing = $order->getBillingAddress();
 
+        /** @var \Magento\Sales\Model\Order\Address $billing */
+        $shipping = $order->getShippingAddress();
+
         $capture = $this->getConfigData('payment_action') == 'authorize_capture' ? true : false;
         $token = $this->getInfoInstance()->getAdditionalInformation('openpay_token');
         $device_session_id = $this->getInfoInstance()->getAdditionalInformation('device_session_id');
@@ -415,7 +429,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         );
 
         if ($this->validateAddress($billing)) {
-            $customer_data = $this->formatAddress($customer_data, $billing);
+            $nameAddressField = $this->addressFormat::getNameAddressFieldByCountry($this->country);
+            $customer_data[$nameAddressField] = $this->addressFormat::formatAddress($billing, $this->country);
         }
         
         $charge_request = array(
@@ -461,6 +476,29 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         // cvv2
         if ($this->country === 'CO' && $save_cc == '0' && $openpay_cc != 'new') {
             $charge_request['cvv2'] = $cvv2;                    
+        }
+
+        //Garantia de contracargos (solo para MX)
+        if ($this->country == 'MX') {
+            if ($this->validateAddress($shipping)){
+                $charge_request['ship_to'] = [
+                    'phone_area_code'=> '+52',
+                    'address' => $this->addressFormat::formatAddress($shipping),
+                    'name' => $shipping->getFirstname(),
+                    'last_name' => $shipping->getLastname(),
+                    'phone_number' => $shipping->getTelephone(),
+                    'email' => $order->getCustomerEmail(),
+                    'method'=> 'card'
+                ];
+            }
+            if ($this->validateAddress($billing)) {
+                $charge_request['billing']['address'] = $this->addressFormat::formatAddress($billing, $this->country, false);
+            }
+
+            $infoProducts = $this->productFormat->getInfoProducts($order);
+
+            $charge_request['product_sum'] = $infoProducts['productSum'];
+            $charge_request['products'] = $infoProducts['products'];
         }
                 
         try {                           
@@ -536,28 +574,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         
         return $this;
     }
-    
-    private function formatAddress($customer_data, $billing) {
-        if ($this->country === 'MX') {
-            $customer_data['address'] = array(
-                'line1' => $billing->getStreetLine(1),
-                'line2' => $billing->getStreetLine(2),
-                'postal_code' => $billing->getPostcode(),
-                'city' => $billing->getCity(),
-                'state' => $billing->getRegion(),
-                'country_code' => $billing->getCountryId()
-            );
-        } else if ($this->country === 'CO') {
-            $customer_data['customer_address'] = array(
-                'department' => $billing->getRegion(),
-                'city' => $billing->getCity(),
-                'additional' => $billing->getStreetLine(1).' '.$billing->getStreetLine(2)
-            );
-        }
-        
-        return $customer_data;
-    }
-    
+     
     private function getCCBrandCode($brand) {
         $code = null;
         switch ($brand) {
