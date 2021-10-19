@@ -8,7 +8,7 @@ Extensión de pagos con tarjeta de crédito de Openpay para Magento2 (v2.4.0)
 Ir a la carpeta raíz del proyecto de Magento y seguir los siguiente pasos:
 
 ```bash    
-composer require openpay/magento2-cards:3.2.*
+composer require openpay/magento2-cards:3.4.*
 php bin/magento module:enable Openpay_Cards --clear-static-content
 php bin/magento setup:upgrade
 php bin/magento cache:clean

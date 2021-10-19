@@ -5,6 +5,7 @@
             <values>
                 <value id="openpay-lib.mx" type="host">*.s3.amazonaws.com</value>
                 <value id="openpay-lib.co" type="host">*.openpay.co</value>
+                <value id="openpay-lib.pe" type="host">*.openpay.pe</value>
                 <value id="analytics-google" type="host">*.google-analytics.com</value>
                 <value id="recaptcha-google" type="host">*.google.com/recaptcha/</value>
                 <value id="recaptcha-gstatic" type="host">*.gstatic.com/recaptcha/</value>
@@ -14,12 +15,14 @@
             <values>
                 <value id="openpay.mx" type="host">*.openpay.mx</value>
                 <value id="openpay.co" type="host">*.openpay.co</value>
+                <value id="openpay.pe" type="host">*.openpay.pe</value>
             </values>
         </policy>
          <policy id="frame-src">
             <values>
                 <value id="openpay-paynet" type="host">*.opencontrol.mx</value>
                 <value id="kaptcha" type="host">*.kaptcha.com</value>
+                <value id="openpayapi.pe" type="host">*.openpay.pe</value>
             </values>
         </policy>
     </policies>

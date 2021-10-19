@@ -20,7 +20,8 @@ class Countries
     {
         return array(
             array('value' => 'MX', 'label' => 'México'),
-            array('value' => 'CO', 'label' => 'Colombia')
-        );     
+            array('value' => 'CO', 'label' => 'Colombia'),
+            array('value' => 'PE', 'label' => 'Perú')
+        );
     }
 }

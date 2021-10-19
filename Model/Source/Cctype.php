@@ -16,8 +16,38 @@ class Cctype extends \Magento\Payment\Model\Source\Cctype
     /**
      * @return array
      */
-    public function getAllowedTypes()
+    public function getAllowedTypesMx()
     {
-        return array('VI', 'MC', 'AE', 'CN');
+        return array(
+            array('value' => 'VI', 'label' => 'Visa'),
+            array('value' => 'MC', 'label' => 'MasterCard'),
+            array('value' => 'AE', 'label' => 'American Express'),
+            array('value' => 'CN', 'label' => 'Carnet')              
+        );     
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllowedTypesCo()
+    {
+        return array(
+            array('value' => 'VI', 'label' => 'Visa'),
+            array('value' => 'MC', 'label' => 'MasterCard'),
+            array('value' => 'AE', 'label' => 'American Express')            
+        );     
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllowedTypesPe()
+    {
+        return array(
+            array('value' => 'VI', 'label' => 'Visa'),
+            array('value' => 'MC', 'label' => 'MasterCard'),
+            array('value' => 'AE', 'label' => 'American Express'),
+            array('value' => 'DN', 'label' => 'Diners')             
+        );     
     }
 }
