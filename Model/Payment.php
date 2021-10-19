@@ -30,6 +30,9 @@ use Openpay\Cards\Model\Utils\ProductFormat;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
 
+use Openpay\Data\Client as Openpay;
+use Openpay\Data\OpenpayApiTransactionError;
+
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
 
@@ -102,7 +105,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Framework\Module\ModuleListInterface $moduleList
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Directory\Model\CountryFactory $countryFactory
-     * @param \Openpay $openpay
+     * @param Openpay $openpay
      * @param array $data
      * @param \Magento\Store\Model\StoreManagerInterface $data
      * @param WriterInterface $configWriter
@@ -122,7 +125,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ModuleListInterface $moduleList, 
             TimezoneInterface $localeDate, 
             CountryFactory $countryFactory, 
-            \Openpay $openpay,             
+            Openpay $openpay,             
             \Psr\Log\LoggerInterface $logger_interface,            
             Customer $customerModel,
             CustomerSession $customerSession,            
@@ -218,8 +221,19 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     public function validate() {                                     
         $info = $this->getInfoInstance();
         $openpay_cc = $info->getAdditionalInformation('openpay_cc');
-        $availableTypes = explode(',', $this->getConfigData('cctypes'));
         $errorMsg = false;
+
+        switch ($this->country) {
+            case "MX":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_mx'));
+            break;
+            case "CO":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_co'));
+            break;
+            case "PE":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_pe'));
+            break;
+        }
 
         $this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc, 'getCcType' => $info->getCcType()));                  
         
@@ -441,10 +455,19 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             'order_id' => $order->getIncrementId(),
             'source_id' => $token,
             'device_session_id' => $device_session_id,
-            'customer' => $customer_data,
-            'use_card_points' => $use_card_points,  
-            'capture' => $capture
+            'customer' => $customer_data
         );
+
+        if ($this->country === 'MX') {
+            $charge_request['use_card_points'] = $use_card_points; 
+            $charge_request['capture'] = $capture;
+
+            // 3D Secure
+            if ($this->charge_type == '3d') {
+                $charge_request['use_3d_secure'] = true;
+                $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
+            }
+        }
         
         if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
             $charge_request['affiliation_bbva'] = $this->affiliation_bbva;
@@ -465,12 +488,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->logger->debug('#installments', array('$installments' => $installments));        
         if($installments > 1 && $this->country === 'CO'){
             $charge_request['payment_plan'] = array('payments' => (int)$installments);
-        }  
-
-        // 3D Secure
-        if ($this->charge_type == '3d') {
-            $charge_request['use_3d_secure'] = true;
-            $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
         }
 
         // cvv2
@@ -533,7 +550,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             
             $this->logger->debug('#saveOrder');        
             
-        } catch (\OpenpayApiTransactionError $e) {                        
+        } catch (OpenpayApiTransactionError $e) {                        
             $this->logger->error('OpenpayApiTransactionError', array('message' => $e->getMessage(), 'code' => $e->getErrorCode(), '$status' => $order->getStatus()));
             
             // Si hubo riesgo de fraude y el usuario definió autenticación selectiva, se envía por 3D secure
@@ -592,6 +609,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             case "carnet":
                 $code = "CN";
                 break;
+            case "diners":
+                $code = "DN";
+            break;
         }
         return $code;
     }
@@ -795,10 +815,16 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return bool
      */
     public function canUseForCurrency($currencyCode) {
-        if ($this->country === 'MX') {
-            return in_array($currencyCode, $this->supported_currency_codes);
-        } else if ($this->country === 'CO') {
-            return $currencyCode == 'COP';
+        switch($this->country) {
+            case "MX":
+                return in_array($currencyCode, $this->supported_currency_codes);
+            break;
+            case "CO":
+                return $currencyCode == 'COP';
+            break;
+            case "PE":
+                return $currencyCode == 'PEN';
+            break;
         }
         return false;
     }
@@ -833,18 +859,23 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
 
     public function getMerchantInfo() {
-        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
-        \Openpay::setSandboxMode($this->is_sandbox);
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+        Openpay::setSandboxMode($this->is_sandbox);
+        $classification = 'Openpay';
 
-        try {
-            $merchantInfo = $openpay->getMerchantInfo(); 
-            $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
-            $classification = ($merchantInfo->classification === 'eglobal' ? 'BBVA' : 'Openpay');
-            $this->configWriter->save('payment/openpay_cards/merchant_classification', $classification);
-            return $merchantInfo->classification;
-        } catch (Exception $e) {
-            return $this->error($e);
+        if($this->country != "PE") {
+            try {
+                $merchantInfo = $openpay->getMerchantInfo(); 
+                $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
+                $classification = ($merchantInfo->classification === 'eglobal' ? 'BBVA' : 'Openpay');
+                return $merchantInfo->classification;
+            } catch (Exception $e) {
+                return $this->error($e);
+            }
         }
+        $this->configWriter->save('payment/openpay_cards/merchant_classification', $classification);
+
+        return $classification;
     }
 
 
@@ -857,17 +888,17 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getOpenpayInstance() {
-        $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
-        \Openpay::setSandboxMode($this->is_sandbox);
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+        Openpay::setSandboxMode($this->is_sandbox);
         
         if($this->merchant_classification === 'eglobal'){
-            \Openpay::setClassificationMerchant($this->merchant_classification);
+            Openpay::setClassificationMerchant($this->merchant_classification);
             $userAgent = "BBVA-MTO2".$this->country."/v1";
         }else{
             $userAgent = "Openpay-MTO2".$this->country."/v2";
         }   
 
-        \Openpay::setUserAgent($userAgent);
+        Openpay::setUserAgent($userAgent);
         
         return $openpay;
     }
@@ -971,11 +1002,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param Address $billing
      * @return boolean
      */
-    public function validateAddress($billing) {
-        if ($billing->getCountryId() === 'MX' && $billing->getStreetLine(1) && $billing->getCity() && $billing->getPostcode() && $billing->getRegion()) {
-            return true;
-        } else if ($billing->getCountryId() === 'CO' && $billing->getStreetLine(1) && $billing->getCity() && $billing->getRegion()) {
-            return true;
+    public function validateAddress($address) {
+        if($this->country == 'MX' || $this->country == 'PE') {
+            return $address->getStreetLine(1) && $address->getCity() && $address->getPostcode() && $address->getRegion();
+        } elseif ($this->country == 'CO') {
+            return $address->getStreetLine(1) && $address->getCity() && $address->getRegion();
         }
         return false;
     }

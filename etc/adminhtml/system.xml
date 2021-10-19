@@ -33,6 +33,9 @@
                 <field id="merchant_classification" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">                 
                     <label>Clasificación del Comercio</label>
                     <frontend_model>Openpay\Cards\Block\System\Config\Form\Field\Disable</frontend_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                 </field>   
                 <field id="affiliation_bbva" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Número de afiliación BBVA</label>            
@@ -118,11 +121,30 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
                 </field>   
-                <field id="cctypes" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes_mx" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
-                    <source_model>Openpay\Cards\Model\Source\Cctype</source_model>
+                    <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesMx</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
-                </field>   
+                </field>
+                <field id="cctypes_co" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tipos de Tarjetas</label>
+                    <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesCo</source_model>
+                    <depends>
+                        <field id="country">CO</field>
+                    </depends>
+                    <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
+                </field>
+                <field id="cctypes_pe" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tipos de Tarjetas</label>
+                    <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesPe</source_model>
+                    <depends>
+                        <field id="country">PE</field>
+                    </depends>
+                    <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
+                </field>
                 <field id="interest_free" translate="label" type="multiselect" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Meses sin Intereses</label>
                     <source_model>Openpay\Cards\Model\Source\MonthsInterestFree::getMonths</source_model>

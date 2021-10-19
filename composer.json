@@ -5,7 +5,7 @@
     "minimum-stability": "stable",    
     "license": "Apache-2.0",
     "require": {
-        "openpay/sdk": "2.1.*"
+        "openpay/sdk": "2.2.*"
     },
     "authors": [
         {
@@ -14,9 +14,9 @@
             "email": "soporte@openpay.mx"
         },
         {
-            "name": "Federico Balderas",
+            "name": "Jose Romero",
             "homepage": "https://openpay.mx",
-            "email": "federico.balderas@openpay.mx"
+            "email": "plugins@openpay.mx"
         }
     ],
     "extra": {

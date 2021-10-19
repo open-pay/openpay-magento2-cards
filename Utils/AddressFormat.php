@@ -10,6 +10,7 @@ class AddressFormat
     public static function formatAddress($address, $country = 'MX', $complete = true) {
         switch ($country) {
             case 'MX':
+            case 'PE':
                 $adressFormated = [
                     'city' => $address->getCity(),
                     'state' => $address->getRegion(),
