@@ -95,7 +95,7 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->logger->debug('getLastSuccessQuoteId: '.$this->checkoutSession->getLastSuccessQuoteId());
             $this->logger->debug('getLastRealOrderId: '.$this->checkoutSession->getLastRealOrderId());
             
-            $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+            $status = $this->payment->getCustomStatus('processing');
             
             $openpay = $this->payment->getOpenpayInstance();                          
             $order = $this->orderRepository->get($order_id);
@@ -119,6 +119,8 @@ class Success extends \Magento\Framework\App\Action\Action
             if ($order && $charge->status != 'completed') {
                 $order->cancel();
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Autenticación de 3D Secure fallida.'));
+                $statusCanceled = $this->payment->getCustomStatus('canceled');
+                $order->setStatus($statusCanceled);
                 $order->save();
                 $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
                                 

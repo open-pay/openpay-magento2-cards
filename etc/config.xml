@@ -47,6 +47,9 @@
                 <nine_months>900</nine_months>
                 <twelve_months>1200</twelve_months>
                 <eighteen_months>1800</eighteen_months>
+                <processing_openpay>processing</processing_openpay>
+                <pending_payment_openpay>payment_review</pending_payment_openpay>
+                <canceled_openpay>canceled</canceled_openpay>
             </openpay_cards>
         </payment>
     </default>
