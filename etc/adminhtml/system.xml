@@ -208,9 +208,24 @@
                     <label>Pago para países específicos</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>    
-                <field id="sort_order" translate="label" type="text" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="processing_openpay" translate="label" type="select" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Openpay processing</label>
+					<source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
+                    <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "processing"</comment>
+				</field>
+                <field id="pending_payment_openpay" translate="label" type="select" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Openpay Pendiente de Pago</label>
+					<source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
+                    <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "payment_review"</comment>
+				</field>
+                <field id="canceled_openpay" translate="label" type="select" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Openpay Cancelado</label>
+					<source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
+                    <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "canceled"</comment>
+				</field>
+                <field id="sort_order" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
-                </field>                       
+                </field>                     
             </group>
         </section>
     </system>

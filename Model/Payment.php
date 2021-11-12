@@ -68,6 +68,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $minimum_amounts = 0;
     protected $config_months;
     protected $merchant_classification = '';
+    protected $processing_openpay = '';
+    protected $pending_payment_openpay = '';
+    protected $canceled_openpay = '';
 
     /**
      * @var Customer
@@ -178,8 +181,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
 
         $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
-        
 
+        $this->processing_openpay = $this->getConfigData('processing_openpay');
+        $this->pending_payment_openpay = $this->getConfigData('pending_payment_openpay');
+        $this->canceled_openpay = $this->getConfigData('canceled_openpay');
+        
         $this->openpay = $openpay;
 
         if($this->merchant_classification === 'eglobal'){
@@ -474,8 +480,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $payment->setCcExpYear($charge->card->expiration_year);
                                                                                     
             if ($this->charge_type == '3d') {            
-                $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
-                $order->setState($status)->setStatus($status);
+                $status = $this->getCustomStatus('pending_payment');
+                $state = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+
+                $order->setState($state)->setStatus($status);
                 $order->setCanSendNewEmailFlag(false);
                 $payment->setIsTransactionPending(true); 
                 $payment->setIsTransactionClosed(false);                
@@ -963,4 +971,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return false;
     }
 
+    public function getCustomStatus($status) {
+        switch($status){
+            case 'processing':
+                return ($this->processing_openpay != \Magento\Sales\Model\Order::STATE_PROCESSING ) ? $this->processing_openpay : \Magento\Sales\Model\Order::STATE_PROCESSING;
+            case 'pending_payment':
+                return ($this->pending_payment_openpay != \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT ) ? $this->pending_payment_openpay : \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+            case 'canceled':
+                return ($this->canceled_openpay != \Magento\Sales\Model\Order::STATE_CANCELED ) ? $this->canceled_openpay : \Magento\Sales\Model\Order::STATE_CANCELED;
+        }
+    }
 }
