@@ -49,8 +49,14 @@ class AfterPlaceOrder implements ObserverInterface {
 
             $this->logger->debug('#AfterPlaceOrder openpay_cards', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));
 
+            if($charge->status == 'completed') {
+                $order->setStatus($this->config->getCustomStatus('processing'));
+                $order->save();
+            }        
             if ($charge->status == 'charge_pending' && isset($_SESSION['openpay_3d_secure_url'])) {
                 $this->logger->debug('#AfterPlaceOrder', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_3d_secure_url']));
+                $order->setStatus($this->config->getCustomStatus('pending_payment'));
+                $order->save();
                 $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
                 $this->_redirect->redirect($this->_response, $_SESSION['openpay_3d_secure_url']);
             }
