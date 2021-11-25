@@ -93,7 +93,9 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->logger->debug('getLastQuoteId: '.$quote_id);
             $this->logger->debug('getLastOrderId: '.$order_id);
             $this->logger->debug('getLastSuccessQuoteId: '.$this->checkoutSession->getLastSuccessQuoteId());
-            $this->logger->debug('getLastRealOrderId: '.$this->checkoutSession->getLastRealOrderId());        
+            $this->logger->debug('getLastRealOrderId: '.$this->checkoutSession->getLastRealOrderId());
+            
+            $status = $this->payment->getCustomStatus('processing');
             
             $openpay = $this->payment->getOpenpayInstance();                          
             $order = $this->orderRepository->get($order_id);
@@ -106,9 +108,19 @@ class Success extends \Magento\Framework\App\Action\Action
                 $charge = $openpay->charges->get($this->request->getParam('id'));
             }
             $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
+            
+            if ($order && $charge->status == 'in_progress') {
+                $order->setState($status)->setStatus($status);
+                $order->addStatusHistoryComment("Preautorización realizada exitosamente");
+                $order->save();
+                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+            } 
+            
             if ($order && $charge->status != 'completed') {
                 $order->cancel();
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Autenticación de 3D Secure fallida.'));
+                $statusCanceled = $this->payment->getCustomStatus('canceled');
+                $order->setStatus($statusCanceled);
                 $order->save();
                 $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
                                 
@@ -117,7 +129,6 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             $this->orderSender->send($order, true);
 
-            $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);  
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
