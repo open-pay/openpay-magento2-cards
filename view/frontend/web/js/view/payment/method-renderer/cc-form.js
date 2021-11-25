@@ -48,7 +48,6 @@ define(
                         },
                         dataType:'json',
                         success : function(data) {
-                            console.log(data);
                             if(data.status == 'success') {
                                 if (data.card_type === 'CREDIT') {
                                     if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show();
@@ -62,6 +61,11 @@ define(
                                         $('#openpay_installments option[value="1"]').attr("selected",true);
                                     }
                                 }
+                            } else {
+                                $("#openpay_cards_interest_free").hide();
+                                $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                                $("#openpay_installments").hide();
+                                $('#openpay_installments option[value="1"]').attr("selected",true);
                             }
                         },
                         error : function(request,error)
