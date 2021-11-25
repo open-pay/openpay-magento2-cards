@@ -38,8 +38,7 @@
                 <payment_action>authorize_capture</payment_action>
                 <save_cc>0</save_cc>
                 <use_card_points>no</use_card_points>
-                <iva>0</iva>                
-                <installments>1</installments>
+                <iva>0</iva>
                 <allowspecific>0</allowspecific>
                 <minimum_amounts>0</minimum_amounts>
                 <three_months>300</three_months>
