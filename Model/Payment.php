@@ -68,7 +68,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $logger;
     protected $_storeManager;
     protected $save_cc;
-    protected $installments;
     protected $iva = 0;
     protected $minimum_amounts = 0;
     protected $config_months;
@@ -175,7 +174,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
         $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
         $this->save_cc = $this->getConfigData('save_cc');
-        $this->installments = $this->country === 'CO' ? $this->getConfigData('installments') : '1';
         $this->minimum_amounts = $this->getConfigData('minimum_amounts');
         $this->config_months = $this->minimum_amounts ? array(
                                         "3" => $this->getConfigData('three_months'),
@@ -292,9 +290,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         );
         $infoInstance->setAdditionalInformation('cc_cid',
             isset($additionalData['cc_cid']) ? $additionalData['cc_cid'] : null
-        );
-        $infoInstance->setAdditionalInformation('installments',
-            isset($additionalData['installments']) ? $additionalData['installments'] : null
         );
         return $this;
     }
@@ -934,12 +929,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getInstallments() {        
-        $installments = explode(',', $this->installments);                  
-        if(!in_array('1', $installments)) {            
-            array_unshift($installments, '1');
-        }        
+        $installments = array();                  
+        for ($i=1; $i <= 36; $i++) {
+            $installments[] = $i;
+        }
         
-        return $installments;
+        return $installments; 
     }
     
     public function useCardPoints() {

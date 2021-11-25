@@ -19,39 +19,49 @@ define(
     ],
     function (Component, $, quote, customer) {
         'use strict';
-
-        //console.log(window.checkoutConfig.customerData);
-        //console.log(customer.customerData);
-        //console.log(quote.billingAddress._latestValue);
-        var customerData = null; 
-        var total = window.checkoutConfig.payment.total;
-        var cardBin = null;        
         
+        var customerData = null; 
+        var total = window.checkoutConfig.payment.total;       
+        var card_old = null;
         $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
             var card = $(this).val();
             var urlStore = window.checkoutConfig.payment.url_store;
             var months = window.checkoutConfig.payment.months_interest_free;
             var country = window.checkoutConfig.payment.country;
             var bin = null;                   
-            if(country == 'MX' && card.length >= 6 && months.length > 1){
+            if (card.length >= 6) {
+                if (country == 'PE') {
+                    return;
+                } 
+                if (country == 'MX' && months.length < 3) {
+                    return;
+                }
                 var bin = card.substring(0, 6);
-                if(bin != cardBin){
-                    cardBin = bin;
+                if(card_old  != bin){
+                    card_old = bin;
                     $.ajax({
                         url : urlStore+'openpay/payment/getTypeCard',
                         type : 'POST',
                         showLoader: true,
                         data: {
-                            card_bin: cardBin,
+                            card_bin: bin,
                         },
                         dataType:'json',
                         success : function(data) {
-                            if(data === 'CREDIT'){
-                                $("#openpay_cards_interest_free").show();
-                            }else{
-                                $("#openpay_cards_interest_free").hide();
-                                $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
-                                $("#total-monthly-payment").hide();
+                            console.log(data);
+                            if(data.status == 'success') {
+                                if (data.card_type === 'CREDIT') {
+                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show();
+                                } else {
+                                    if (country == 'MX') {
+                                        $("#openpay_cards_interest_free").hide();
+                                        $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                                        $("#total-monthly-payment").hide();
+                                    } else {
+                                        $("#openpay_installments").hide();
+                                        $('#openpay_installments option[value="1"]').attr("selected",true);
+                                    }
+                                }
                             }
                         },
                         error : function(request,error)
@@ -59,6 +69,8 @@ define(
                             console.log("Error");
                             $("#openpay_cards_interest_free").hide();
                             $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                            $("#openpay_installments").hide();
+                            $('#openpay_installments option[value="1"]').attr("selected",true);
                             $("#total-monthly-payment").hide();
                         }
                     });

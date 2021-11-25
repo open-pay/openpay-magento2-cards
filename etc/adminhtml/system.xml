@@ -213,15 +213,7 @@
                     <depends>
                         <field id="country">CO</field>
                     </depends>                       
-                </field>  
-                <field id="installments" translate="label" type="multiselect" sortOrder="26" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Cuotas</label>
-                    <source_model>Openpay\Cards\Model\Source\Installments::getOptions</source_model>
-                    <depends>
-                        <field id="country">CO</field>
-                    </depends>
-                    <comment>Presione ctrl y clic para seleccionar más de una opción.</comment>
-                </field>                                
+                </field>                              
                 <field id="allowspecific" translate="label" type="allowspecific" sortOrder="27" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago aplicable para países</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
