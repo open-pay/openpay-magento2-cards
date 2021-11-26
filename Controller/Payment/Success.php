@@ -29,6 +29,7 @@ class Success extends \Magento\Framework\App\Action\Action
     protected $invoiceSender;
     protected $transactionRepository;
     protected $searchCriteriaBuilder;
+    protected $coreRegistry;
     
     /**
      * 
@@ -45,6 +46,7 @@ class Success extends \Magento\Framework\App\Action\Action
      * @param \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender
      * @param \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository
      * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param \Magento\Framework\Registry $coreRegistry
      * 
      */
     public function __construct(
@@ -60,7 +62,8 @@ class Success extends \Magento\Framework\App\Action\Action
             \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
             \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
             \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
-            \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+            \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
+            \Magento\Framework\Registry $coreRegistry
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
@@ -75,6 +78,7 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->invoiceSender = $invoiceSender;
         $this->transactionRepository = $transactionRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->coreRegistry = $coreRegistry;
     }
     /**
      * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
@@ -118,13 +122,17 @@ class Success extends \Magento\Framework\App\Action\Action
             
             if ($order && $charge->status != 'completed') {
                 $order->cancel();
-                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('Autenticación de 3D Secure fallida.'));
+                $messageError = 'La transacción no pudo ser procesada, ' . $charge->error_message;
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __($messageError));
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
                 $order->setStatus($statusCanceled);
                 $order->save();
                 $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
-                                
-                return $this->resultPageFactory->create();        
+                $resultPage = $this->resultPageFactory->create();
+                $code = $charge->error_code;
+                $this->coreRegistry->register('messageError', $this->getMessageError($code));
+                return $resultPage;
+                        
             }
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             $this->orderSender->send($order, true);
@@ -182,5 +190,52 @@ class Success extends \Magento\Framework\App\Action\Action
         }
         
         return $this->resultRedirectFactory->create()->setPath('checkout/cart'); 
+    }
+
+    private function getMessageError($code) {
+
+        switch($code){
+            /* ERRORES GENERALES */
+            case "2010":
+                return "Autenticación de 3D Secure fallida, favor de contactar a tu Banco emisor. La transacción no pudo completarse y la orden de compra fue cancelada.";
+            case '1000':
+            case '1004':
+            case '1005':
+                return 'el servicio no está disponible';
+                
+            /* ERRORES TARJETA */
+            case '3001':
+            case '3004':
+            case '3005':
+            case '3007':
+                return 'La tarjeta fue rechazada';
+                
+            case '3002':
+                return 'La tarjeta ha expirado';
+                
+            case '3003':
+                return 'La tarjeta no tiene fondos suficientes';
+                
+            case '3006':
+                return 'La operación no esta permitida para este cliente o esta transacción';
+                
+            case '3008':
+                return 'La tarjeta no es soportada en transacciones en línea';
+                
+            case '3009':
+                return 'La tarjeta fue reportada como perdida';
+                
+            case '3010':
+                return 'El banco ha restringido la tarjeta';
+                
+            case '3011':
+                return 'El banco ha solicitado que la tarjeta sea retenida. Contacte al banco';
+                
+            case '3012':
+                return 'Se requiere solicitar al banco autorización para realizar este pago';
+                
+            default: /* Demás errores 400 */
+                return 'La petición no pudo ser procesada'; 
+        }
     }
 }

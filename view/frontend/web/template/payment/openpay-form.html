@@ -78,7 +78,7 @@
                         <span><!-- ko i18n: 'Credit Card Number'--><!-- /ko --></span>
                     </label>
                     <div class="control">
-                        <input type="number" name="payment[cc_number]" class="input-text" value=""
+                        <input type="number" maxlength="16" name="payment[cc_number]" class="input-text" value=""
                                 data-bind="attr: {
                                                 autocomplete: off,
                                                 id: getCode() + '_cc_number',
@@ -133,7 +133,8 @@
                         <span><!-- ko i18n: 'Card Verification Number'--><!-- /ko --></span>
                     </label>
                     <div class="control _with-tooltip">
-                        <input type="number"
+                        <input type="password"
+                                maxlength="4"
                                 autocomplete="off"
                                 class="input-text cvv"
                                 name="payment[cc_cid]"

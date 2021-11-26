@@ -590,7 +590,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         } catch (\Exception $e) {
             $this->_logger->error(__('Payment capturing error.'));            
             $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
-            throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno en Magento. Intente más tarde.'));
         }
         
         return $this;
@@ -964,35 +964,24 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $msg = 'Servicio no disponible.';
                 break;
             /* ERRORES TARJETA */
-            case '3001':
-            case '3004':
-            case '3005':
-            case '3007':
-                $msg = 'La tarjeta fue rechazada.';
-                break;
             case '3002':
-                $msg = 'La tarjeta ha expirado.';
+                $msg = 'Tarjeta expirada. Por favor intenta con otra tarjeta o con otro método de pago.';
                 break;
             case '3003':
-                $msg = 'La tarjeta no tiene fondos suficientes.';
+                $msg = 'Fondos insuficientes. Por favor intenta con otra tarjeta o con otro método de pago';
                 break;
+            case '3001':    
             case '3006':
-                $msg = 'La operación no esta permitida para este cliente o esta transacción.';
-                break;
             case '3008':
-                $msg = 'La tarjeta no es soportada en transacciones en línea.';
-                break;
-            case '3009':
-                $msg = 'La tarjeta fue reportada como perdida.';
-                break;
-            case '3010':
-                $msg = 'El banco ha restringido la tarjeta.';
-                break;
-            case '3011':
-                $msg = 'El banco ha solicitado que la tarjeta sea retenida. Contacte al banco.';
-                break;
             case '3012':
-                $msg = 'Se requiere solicitar al banco autorización para realizar este pago.';
+                $msg = 'Por favor contacta a tu banco o intenta con otro método de pago.';
+                break;
+            case '3004':
+            case '3005':
+            case '3009':
+            case '3010':
+            case '3011':
+                $msg = 'Por favor intenta con otro método de pago';
                 break;
             default: /* Demás errores 400 */
                 $msg = 'La petición no pudo ser procesada.';
