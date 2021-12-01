@@ -168,17 +168,10 @@ define(
                     $('#openpay_cards_cc_cid').val("");                                                         
                     
                     $('#save_cc_fieldset').hide();                    
-                    if (country === 'MX') {
-                        $('#payment_form_openpay_cards').hide();
-                    }else if(country === 'CO'){
-                        $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
-                    }
-                } else {                    
-                    if (country === 'MX') {
-                        $('#payment_form_openpay_cards').show();
-                    }else if(country === 'CO'){
-                        $('#payment_form_openpay_cards > div').show();
-                    }
+                    $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
+                    
+                } else {
+                    $('#payment_form_openpay_cards > div').show();
                     $('#save_cc_fieldset').show();
                     $('#save_cc').prop('disabled', false);
                 }
@@ -295,9 +288,6 @@ define(
                     'method': "openpay_cards",
                     'additional_data': {
                         'cc_cid': this.creditCardVerificationNumber(),
-                        'cc_type': this.creditCardType(),
-                        'cc_exp_year': this.creditCardExpYear(),
-                        'cc_exp_month': this.creditCardExpMonth(),
                         'cc_number': this.creditCardNumber(),
                         'openpay_token': $("#openpay_token").val(),
                         'device_session_id': $('#device_session_id').val(),
@@ -316,13 +306,12 @@ define(
                     return false;
                 }
                 if($('#openpay_cc').val() !== 'new'){
-                    if (customerData.countryId === 'MX') {
-                        return true;
-                    }else if(customerData.countryId === 'CO'){
-                        $('.field.number').removeClass("required");
-                        $("#openpay_cards_cc_type_exp_div").removeClass("required");
-                    } 
-                }              
+                    $('.field.number').removeClass("required");
+                    $("#openpay_cards_cc_type_exp_div").removeClass("required");
+                } else {
+                    $('.field.number').addClass("required");
+                    $("#openpay_cards_cc_type_exp_div").addClass("required");
+                }        
                 return $form.validation() && $form.validation('isValid');
             },
             getCustomerFullName: function() {             
