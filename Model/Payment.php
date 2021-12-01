@@ -525,7 +525,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             
             // Validate New Card
             if ($save_cc == '1' && $openpay_cc == 'new') {
-                $charge_request['source_id'] = $this->validateNewCard($charge_request, $token, $device_session_id, $card_number);
+                $charge_request['source_id'] = $this->validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number);
             } else if ($save_cc == '0' && $openpay_cc != 'new') {
                 $charge_request['source_id'] = $openpay_cc;
             }
@@ -599,7 +599,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         } catch (\Exception $e) {
             $this->_logger->error(__('Payment capturing error.'));            
             $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
-            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno en Magento. Intente más tarde.'));
+            if($e->getMessage()) {
+                throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+            } else {
+                throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno en Magento. Intente más tarde.'));
+            }
         }
         
         return $this;
@@ -629,11 +633,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return $code;
     }
 
-    private function validateNewCard($charge_request, $token, $device_session_id, $card_number) {
+    private function validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number) {
+        $openpay_customer = $this->retrieveOpenpayCustomerAccount($customer_data);
         $customerId = $this->customerSession->getCustomer()->getId();
         $has_openpay_account = $this->hasOpenpayAccount($customerId);
-        $customer = $this->getOpenpayCustomer($has_openpay_account->openpay_id);
-        $cards = $this->getCreditCards($customer, $has_openpay_account->created_at);
+        $cards = $this->getCreditCards($openpay_customer, $has_openpay_account->created_at);
 
         $card_number_bin = substr($card_number, 0, 6);
         $card_number_complement = substr($card_number, -4);
@@ -650,7 +654,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         'device_session_id' => $device_session_id
         );
 
-        $card = $this->createCreditCard($customer, $card_data);
+        $card = $this->createCreditCard($openpay_customer, $card_data);
 
         return $card->id;
     }
@@ -771,7 +775,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     private function getCreditCards($customer, $customer_created_at) {
-        $from_date = date('Y-m-d', strtotime($customer_created_at));
+        $from_date = date('Y-m-d', strtotime($customer_created_at."- 1 day"));
         $to_date = date('Y-m-d');
         try {
             return $customer->cards->getList(array(
