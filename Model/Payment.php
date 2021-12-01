@@ -428,6 +428,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $save_cc = $this->getInfoInstance()->getAdditionalInformation('save_cc');
         $openpay_cc = $this->getInfoInstance()->getAdditionalInformation('openpay_cc');
         $cvv2 = $this->getInfoInstance()->getAdditionalInformation('cc_cid');
+        $card_number = $payment->getData('cc_number');
         
         if (!$token && (!$openpay_cc || $openpay_cc == 'new')) {
             $msg = 'ERROR 100 Please specify card info';
@@ -493,7 +494,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
 
         // cvv2
-        if ($this->country === 'CO' && $save_cc == '0' && $openpay_cc != 'new') {
+        if ($save_cc == '0' && $openpay_cc != 'new') {
             $charge_request['cvv2'] = $cvv2;                    
         }
 
@@ -520,9 +521,17 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['products'] = $infoProducts['products'];
         }
                 
-        try {                           
+        try {
+            
+            // Validate New Card
+            if ($save_cc == '1' && $openpay_cc == 'new') {
+                $charge_request['source_id'] = $this->validateNewCard($charge_request, $token, $device_session_id, $card_number);
+            } else if ($save_cc == '0' && $openpay_cc != 'new') {
+                $charge_request['source_id'] = $openpay_cc;
+            }
+
             // Realiza la transacción en Openpay
-            $charge = $this->makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc);                                                
+            $charge = $this->makeOpenpayCharge($customer_data, $charge_request);                                                
             
             $payment->setTransactionId($charge->id);  
             $payment->setCcLast4(substr($charge->card->card_number, -4));
@@ -562,7 +571,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $charge_request['use_3d_secure'] = true;
                 $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
                                 
-                $charge = $this->makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc);
+                $charge = $this->makeOpenpayCharge($customer_data, $charge_request);
                 $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
                 $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
                 
@@ -619,8 +628,34 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
         return $code;
     }
+
+    private function validateNewCard($charge_request, $token, $device_session_id, $card_number) {
+        $customerId = $this->customerSession->getCustomer()->getId();
+        $has_openpay_account = $this->hasOpenpayAccount($customerId);
+        $customer = $this->getOpenpayCustomer($has_openpay_account->openpay_id);
+        $cards = $this->getCreditCards($customer, $has_openpay_account->created_at);
+
+        $card_number_bin = substr($card_number, 0, 6);
+        $card_number_complement = substr($card_number, -4);
+        foreach ($cards as $card) {
+            if($card_number_bin == substr($card->card_number, 0, 6) && $card_number_complement == substr($card->card_number, -4)) {
+                $errorMsg = "La tarjeta ya se encuentra registrada, seleccionala de la lista de tarjetas.";
+                $this->logger->error('validateNewCard', array('#ERROR validateNewCard() => ' => $errorMsg));
+                throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));
+            }
+        }
+
+        $card_data = array(            
+        'token_id' => $token,            
+        'device_session_id' => $device_session_id
+        );
+
+        $card = $this->createCreditCard($customer, $card_data);
+
+        return $card->id;
+    }
     
-    private function makeOpenpayCharge($customer_data, $charge_request, $token, $device_session_id, $save_cc, $openpay_cc) {        
+    private function makeOpenpayCharge($customer_data, $charge_request) {        
         $openpay = $this->getOpenpayInstance();
 
         if (!$this->customerSession->isLoggedIn()) {
@@ -632,19 +667,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         unset($charge_request['customer']); 
 
         $openpay_customer = $this->retrieveOpenpayCustomerAccount($customer_data);
-
-        if ($save_cc == '1' && $openpay_cc == 'new') {
-            $card_data = array(            
-                'token_id' => $token,            
-                'device_session_id' => $device_session_id
-            );
-            $card = $this->createCreditCard($openpay_customer, $card_data);
-
-            // Se reemplaza el "source_id" por el ID de la tarjeta
-            $charge_request['source_id'] = $card->id;                                                            
-        } else if ($save_cc == '0' && $openpay_cc != 'new') {
-            $charge_request['source_id'] = $openpay_cc;                    
-        }
 
         // Cargo para usuarios con cuenta
         return $openpay_customer->charges->create($charge_request);            
