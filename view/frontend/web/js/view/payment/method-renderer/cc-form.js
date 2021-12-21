@@ -161,8 +161,8 @@ define(
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
                     $('#save_cc').prop('disabled', true);                 
-                    
-                    $('#openpay_cards_cc_number').val("");                                     
+                    var binValidate = Number(card.substring(0,6));
+                    $('#openpay_cards_cc_number').val(binValidate).change();                                 
                     $("#openpay_cards_expiration").val("").change();
                     $("#openpay_cards_expiration_yr").val("").change();
                     $('#openpay_cards_cc_cid').val("");                                                         
@@ -171,6 +171,7 @@ define(
                     $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
                     
                 } else {
+                    $('#openpay_cards_cc_number').val('').change();
                     $('#payment_form_openpay_cards > div').show();
                     $('#save_cc_fieldset').show();
                     $('#save_cc').prop('disabled', false);
