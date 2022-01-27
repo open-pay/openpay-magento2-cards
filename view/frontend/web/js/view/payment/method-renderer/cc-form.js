@@ -30,9 +30,6 @@ define(
             var country = window.checkoutConfig.payment.country;
             var bin = null;                   
             if (card.length >= 6) {
-                if (country == 'PE') {
-                    return;
-                } 
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
@@ -50,7 +47,7 @@ define(
                         success : function(data) {
                             if(data.status == 'success') {
                                 if (data.card_type === 'CREDIT') {
-                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show();
+                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show(); /** This else shows the instalments input for CO and PE */
                                 } else {
                                     if (country == 'MX') {
                                         $("#openpay_cards_interest_free").hide();
@@ -161,8 +158,8 @@ define(
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
                     $('#save_cc').prop('disabled', true);                 
-                    
-                    $('#openpay_cards_cc_number').val("");                                     
+                    var binValidate = Number(card.substring(0,6));
+                    $('#openpay_cards_cc_number').val(binValidate).change();                                 
                     $("#openpay_cards_expiration").val("").change();
                     $("#openpay_cards_expiration_yr").val("").change();
                     $('#openpay_cards_cc_cid').val("");                                                         
@@ -171,6 +168,7 @@ define(
                     $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
                     
                 } else {
+                    $('#openpay_cards_cc_number').val('').change();
                     $('#payment_form_openpay_cards > div').show();
                     $('#save_cc_fieldset').show();
                     $('#save_cc').prop('disabled', false);

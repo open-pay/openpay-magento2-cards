@@ -281,6 +281,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         );        
         $infoInstance->setAdditionalInformation('use_card_points',
             isset($additionalData['use_card_points']) ? $additionalData['use_card_points'] : null
+        );
+        $infoInstance->setAdditionalInformation('installments',
+            isset($additionalData['installments']) ? $additionalData['installments'] : null
         );        
         $infoInstance->setAdditionalInformation('save_cc',
             isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
@@ -486,10 +489,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['payment_plan'] = array('payments' => (int)$interest_free);
         }  
         
-        // Pago en cuotas (solo para CO)
+        // Pago en cuotas (solo para CO y PE)
         $installments = $this->getInfoInstance()->getAdditionalInformation('installments');
         $this->logger->debug('#installments', array('$installments' => $installments));        
-        if($installments > 1 && $this->country === 'CO'){
+        if($installments > 1 && ($this->country === 'CO' || $this->country === 'PE')){
             $charge_request['payment_plan'] = array('payments' => (int)$installments);
         }
 
