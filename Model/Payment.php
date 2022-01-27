@@ -75,6 +75,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $processing_openpay = '';
     protected $pending_payment_openpay = '';
     protected $canceled_openpay = '';
+    protected $isAvailableInstallments;
 
     /**
      * @var Customer
@@ -170,7 +171,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
         $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
         $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
-        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';        
+        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';
+        $this->isAvailableInstallments = $this->country === 'PE' ?  $this->getConfigData('installments') : false;
         $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
         $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
         $this->save_cc = $this->getConfigData('save_cc');
@@ -491,8 +493,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         
         // Pago en cuotas (solo para CO y PE)
         $installments = $this->getInfoInstance()->getAdditionalInformation('installments');
-        $this->logger->debug('#installments', array('$installments' => $installments));        
-        if($installments > 1 && ($this->country === 'CO' || $this->country === 'PE')){
+        $this->logger->debug('#installments', array('$installments' => $installments));
+        $isInstallmentsCO = $this->country === 'CO';
+        $isInstallmentsPE = $this->country === 'PE' && $this->isAvailableInstallments;
+        if($installments > 1 && ($isInstallmentsCO || $isInstallmentsPE)){
             $charge_request['payment_plan'] = array('payments' => (int)$installments);
         }
 
@@ -978,6 +982,16 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function canSaveCC() {
         return $this->save_cc;
+    }
+
+     /**
+     * 
+     * Determina para Peru si se puede pagar a cuotas
+     * 
+     * @return boolean
+     */
+    public function getIsAvailableInstallments() {
+        return $this->isAvailableInstallments;
     }
     
     /**

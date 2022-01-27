@@ -41,6 +41,7 @@
                 <iva>0</iva>
                 <allowspecific>0</allowspecific>
                 <minimum_amounts>0</minimum_amounts>
+                <installments>0</installments>
                 <three_months>300</three_months>
                 <six_months>600</six_months>
                 <nine_months>900</nine_months>
