@@ -30,9 +30,6 @@ define(
             var country = window.checkoutConfig.payment.country;
             var bin = null;                   
             if (card.length >= 6) {
-                if (country == 'PE') {
-                    return;
-                } 
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
@@ -50,7 +47,7 @@ define(
                         success : function(data) {
                             if(data.status == 'success') {
                                 if (data.card_type === 'CREDIT') {
-                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show();
+                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show(); /** This else shows the instalments input for CO and PE */
                                 } else {
                                     if (country == 'MX') {
                                         $("#openpay_cards_interest_free").hide();

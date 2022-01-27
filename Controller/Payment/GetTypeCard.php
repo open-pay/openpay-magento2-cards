@@ -50,7 +50,7 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
                     'status' => 'success',
                     'card_type' => $cardInfo->type
                 );
-            } else if($country == 'CO') {
+            } else if($country == 'CO' || $country == 'PE') {
                 $cardInfo = $this->requestOpenpay('/cards/validate-bin?bin='.$post['card_bin'], $this->payment->isSandbox(), "GET");
                 $data = array(
                     'status' => 'success',
