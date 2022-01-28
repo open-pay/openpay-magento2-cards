@@ -69,13 +69,14 @@ define(
         var card_old = null;
         $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
             var card = $(this).val();
-            var urlStore = window.checkoutConfig.payment.url_store;
-            var months = window.checkoutConfig.payment.months_interest_free;
-            var country = window.checkoutConfig.payment.country;
-            let isAvailableInstallmentsPE = window.checkoutConfig.payment.isAvailableInstallments;
+            
             
             var bin = null;                   
             if (card.length >= 6) {
+                var urlStore = window.checkoutConfig.payment.url_store;
+                var months = window.checkoutConfig.payment.months_interest_free;
+                var country = window.checkoutConfig.payment.country;
+                let isAvailableInstallmentsPE = (window.checkoutConfig.payment.isAvailableInstallments == '1') ? true : false ;
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
