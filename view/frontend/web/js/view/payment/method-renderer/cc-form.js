@@ -20,17 +20,67 @@ define(
     function (Component, $, quote, customer) {
         'use strict';
         
+        window.handleInstallmentsPE = function (installmentsToAdd) {
+            let installmentsOptions = $('#installments option');
+            let installementsSelect = $('#installments');
+            installmentsOptions.each(function () { 
+                $(this).remove();   
+            });
+
+            installmentsToAdd.forEach(function (element){
+                installementsSelect.append($('<option>', {
+                    value: element,
+                    text: (element == 1) ? 'Una sola cuota' : element + ' cuotas'
+                }));
+            });
+        }
+
+        window.handleShowOrHideInstallments = function (data, country, months) { 
+            if (data.card_type.toUpperCase() === 'CREDIT') {
+                if (country == 'MX' && months.length > 1) $("#openpay_cards_interest_free").show();
+                if (country == 'CO') $("#openpay_installments").show();
+                if (country == 'PE') {
+                    data.installments = data.installments.map(Number);
+                    console.log(data.installments);
+                    if(data.installments.indexOf(1) < 0) data.installments.push(1);
+                    data.installments.sort( function (a,b) { return a - b });
+                    window.handleInstallmentsPE(data.installments);
+                    if(data.installments.length > 1) {    
+                        $("#openpay_installments").show();
+                    } else {
+                        $("#openpay_installments").hide();
+                        $('#openpay_installments option[value="1"]').attr("selected",true);
+                    }
+                } 
+            } else {
+                if (country == 'MX') {
+                    $("#openpay_cards_interest_free").hide();
+                    $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                    $("#total-monthly-payment").hide();
+                } else { 
+                    $("#openpay_installments").hide();
+                    $('#openpay_installments option[value="1"]').attr("selected",true);
+                }
+            }
+        }
+
         var customerData = null; 
         var total = window.checkoutConfig.payment.total;       
         var card_old = null;
         $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
             var card = $(this).val();
-            var urlStore = window.checkoutConfig.payment.url_store;
-            var months = window.checkoutConfig.payment.months_interest_free;
-            var country = window.checkoutConfig.payment.country;
+            
+            
             var bin = null;                   
             if (card.length >= 6) {
+                var urlStore = window.checkoutConfig.payment.url_store;
+                var months = window.checkoutConfig.payment.months_interest_free;
+                var country = window.checkoutConfig.payment.country;
+                let isAvailableInstallmentsPE = (window.checkoutConfig.payment.isAvailableInstallments == '1') ? true : false ;
                 if (country == 'MX' && months.length < 3) {
+                    return;
+                }
+                if (country == 'PE' && !isAvailableInstallmentsPE ){
                     return;
                 }
                 var bin = card.substring(0, 6);
@@ -42,22 +92,12 @@ define(
                         showLoader: true,
                         data: {
                             card_bin: bin,
+                            amount: total
                         },
                         dataType:'json',
                         success : function(data) {
                             if(data.status == 'success') {
-                                if (data.card_type === 'CREDIT') {
-                                    if (country == 'MX') $("#openpay_cards_interest_free").show(); else $("#openpay_installments").show(); /** This else shows the instalments input for CO and PE */
-                                } else {
-                                    if (country == 'MX') {
-                                        $("#openpay_cards_interest_free").hide();
-                                        $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
-                                        $("#total-monthly-payment").hide();
-                                    } else {
-                                        $("#openpay_installments").hide();
-                                        $('#openpay_installments option[value="1"]').attr("selected",true);
-                                    }
-                                }
+                                window.handleShowOrHideInstallments(data, country, months);
                             } else {
                                 $("#openpay_cards_interest_free").hide();
                                 $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
@@ -126,35 +166,40 @@ define(
                 var urlStore = window.checkoutConfig.payment.url_store;
                 var months = window.checkoutConfig.payment.months_interest_free;
                 var country = window.checkoutConfig.payment.country;
+                let total = window.checkoutConfig.payment.total;
                 
-                if(country == 'MX' && months.length > 1){
-                    var bin = card.substring(0, 6);
-                    $.ajax({
-                        url : urlStore+'openpay/payment/getTypeCard',
-                        type : 'POST',
-                        showLoader: true,
-                        data: {
-                            card_bin: bin,
-                        },
-                        dataType:'json',
-                        success : function(data) {
-                            if(data === 'CREDIT'){
-                                $("#openpay_cards_interest_free").show();
-                            }else{
-                                $("#openpay_cards_interest_free").hide();
-                                $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
-                                $("#total-monthly-payment").hide();
-                            }
-                        },
-                        error : function(request,error)
-                        {
-                            console.log("Error");
+                
+                /** Installments supported in MX, CO, PE */
+                var bin = card.substring(0, 6);
+                $.ajax({
+                    url : urlStore+'openpay/payment/getTypeCard',
+                    type : 'POST',
+                    showLoader: true,
+                    data: {
+                        card_bin: bin,
+                        amount: total
+                    },
+                    dataType:'json',
+                    success : function(data) {
+                        if(data.status == 'success'){
+                            window.handleShowOrHideInstallments(data, country, months);
+                        }else{
                             $("#openpay_cards_interest_free").hide();
                             $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
                             $("#total-monthly-payment").hide();
                         }
-                    });
-                }
+                    },
+                    error : function(request,error)
+                    {
+                        console.log("Error");
+                        $("#openpay_cards_interest_free").hide();
+                        $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
+                        $("#total-monthly-payment").hide();
+                        $("#openpay_installments").hide();
+                        $('#openpay_installments option[value="1"]').attr("selected",true);
+                    }
+                });
+                
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
                     $('#save_cc').prop('disabled', true);                 
@@ -189,6 +234,9 @@ define(
             },            
             canSaveCC: function() {
                 return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;                
+            },
+            existsOneCreditCard: function() {
+                return window.checkoutConfig.payment.exists_one_credit_card;
             },
             
             isLoggedIn: function() {

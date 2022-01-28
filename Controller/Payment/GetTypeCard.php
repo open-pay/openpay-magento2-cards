@@ -40,21 +40,38 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
         $openpay = $this->payment->getOpenpayInstance();
 
         try {
-            $this->logger->debug('#CardBin', array('cardInfo' => $post['card_bin']));
-
+            $this->logger->debug('#CardBin', array('cardInfo' => $post['card_bin'].$this->payment->getCountry()));
             $country = $this->payment->getCountry();
-            if($country == 'MX'){
+            
+            if ($country == 'MX') {
                 $openpay = $this->payment->getOpenpayInstance();
                 $cardInfo = $openpay->bines->get($post['card_bin']);
                 $data = array(
                     'status' => 'success',
                     'card_type' => $cardInfo->type
                 );
-            } else if($country == 'CO' || $country == 'PE') {
-                $cardInfo = $this->requestOpenpay('/cards/validate-bin?bin='.$post['card_bin'], $this->payment->isSandbox(), "GET");
+            }
+            
+            if ($country == 'CO') {
+                $cardInfo = $this->requestOpenpay('/cards/validate-bin?bin='.$post['card_bin'], $country, $this->payment->isSandbox(), "GET");
                 $data = array(
                     'status' => 'success',
                     'card_type' => $cardInfo->card_type
+                );
+            }
+
+            if ($country == 'PE') {
+                $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
+                $dataRequest = array(
+                    'amount' => $post['amount'],
+                    'currency' => 'PEN'
+                );
+                $cardInfo = $this->requestOpenpay($path, $country, $this->payment->isSandbox(), "POST", $dataRequest);
+                $installments = (count($cardInfo->installments) == 0) ? [] : $cardInfo->installments;
+                $data = array(
+                    'status' => 'success',
+                    'card_type' => $cardInfo->cardType,
+                    'installments' => $installments
                 );
             }
         } catch (\Exception $e) {
@@ -70,14 +87,20 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
         return $resultJson;
     }
 
-    public function requestOpenpay($api, $is_sandbox, $method = 'GET') {
-        $url = 'https://api.openpay.co/v1';
-        $sandbox_url = 'https://sandbox-api.openpay.co/v1';
+    public function requestOpenpay($api, $country, $is_sandbox,  $method = 'GET', $data = null) {
+        $country = strtolower($country);
+        $url =  sprintf('https://api.openpay.%s/v1', $country);
+        $sandbox_url = sprintf('https://sandbox-api.openpay.%s/v1', $country) ;
     
         $absUrl = $is_sandbox ? $sandbox_url : $url;
         $absUrl .= $api;
     
         $ch = curl_init();
+        if ($method == 'POST' && $data) {
+            $payload = json_encode($data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        }
         curl_setopt($ch, CURLOPT_URL, $absUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
