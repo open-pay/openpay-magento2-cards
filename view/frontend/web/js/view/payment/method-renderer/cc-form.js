@@ -235,6 +235,9 @@ define(
             canSaveCC: function() {
                 return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;                
             },
+            existsOneCreditCard: function() {
+                return window.checkoutConfig.payment.exists_one_credit_card;
+            },
             
             isLoggedIn: function() {
                 console.log('isLoggedIn()', window.checkoutConfig.payment.is_logged_in);

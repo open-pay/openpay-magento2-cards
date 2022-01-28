@@ -60,6 +60,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 $config['payment']['use_card_points'] = $this->payment->useCardPoints();
                 $config['payment']['total'] = $this->cart->getQuote()->getGrandTotal();
                 $config['payment']['can_save_cc'] = $this->payment->canSaveCC();
+                $config['payment']['exists_one_credit_card'] = $this->payment->existsOneCreditCard();
                 $config['payment']['cc_list'] = $this->payment->getCreditCardList();
                 $config['payment']['is_logged_in'] = $this->payment->isLoggedIn();
                 $config['payment']['url_store'] = $this->payment->getBaseUrlStore();

@@ -797,23 +797,24 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
     
     public function getCreditCardList() {
+        $message = 'Selecciona tarjeta';
         if (!$this->customerSession->isLoggedIn()) {
-            return array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+            return array(array('value' => 'new', 'name' => $message));
         }
         
         $customerId = $this->customerSession->getCustomer()->getId();
         $has_openpay_account = $this->hasOpenpayAccount($customerId);
         if ($has_openpay_account === false) {
-            return array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+            return array(array('value' => 'new', 'name' => $message));
         }
 
         $customer = $this->getOpenpayCustomer($has_openpay_account->openpay_id);
         if($customer == false){
-            return array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+            return array(array('value' => 'new', 'name' => $message));
         }
 
         try {
-            $list = array(array('value' => 'new', 'name' => 'Nueva tarjeta'));
+            $list = array(array('value' => 'new', 'name' => $message));
             $cards = $this->getCreditCards($customer, $has_openpay_account->created_at);
             
             foreach ($cards as $card) {                
@@ -826,6 +827,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }        
     }
     
+    public function existsOneCreditCard() {
+        return count($this->getCreditCardList()) > 1;
+    }
+
     public function getBaseUrlStore(){
         $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
         return $base_url;
