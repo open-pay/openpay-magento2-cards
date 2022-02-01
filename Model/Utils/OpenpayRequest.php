@@ -39,7 +39,7 @@ class OpenpayRequest {
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         $result = curl_exec($ch);
         $response = null;
-        if (curl_exec($ch) === false) {
+        if ($result === false) {
             $this->logger->error("Curl error", array("curl_errno" => curl_errno($ch), "curl_error" => curl_error($ch)));
         } else {
             $info = curl_getinfo($ch);
