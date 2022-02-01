@@ -26,6 +26,7 @@ use Magento\Directory\Model\CountryFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Openpay\Cards\Model\Utils\AddressFormat;
 use Openpay\Cards\Model\Utils\ProductFormat;
+use Openpay\Cards\Model\Utils\OpenpayRequest;
 
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -76,6 +77,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $pending_payment_openpay = '';
     protected $canceled_openpay = '';
     protected $isAvailableInstallments;
+    protected $openpayRequest;
 
     /**
      * @var Customer
@@ -135,6 +137,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             \Openpay\Cards\Model\OpenpayCustomerFactory $openpayCustomerFactory,
             AddressFormat $addressFormat,
             ProductFormat $productFormat,
+            OpenpayRequest $openpayRequest,
             array $data = array()            
     ) {
         
@@ -202,6 +205,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->canceled_openpay = $this->getConfigData('canceled_openpay');
 
         $this->openpay = $openpay;
+        $this->openpayRequest = $openpayRequest;
 
         if($this->merchant_classification === 'eglobal'){
             if(empty($this->getConfigData('affiliation_bbva'))){
@@ -500,10 +504,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['payment_plan'] = array('payments' => (int)$installments);
         }
 
-        // cvv2
-        if ($save_cc == '0' && $openpay_cc != 'new') {
-            $charge_request['cvv2'] = $cvv2;                    
-        }
 
         //Garantia de contracargos (solo para MX)
         if ($this->country == 'MX') {
@@ -529,11 +529,24 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
                 
         try {
+            $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
+            $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
             
             // Validate New Card
             if ($save_cc == '1' && $openpay_cc == 'new') {
                 $charge_request['source_id'] = $this->validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number);
             } else if ($save_cc == '0' && $openpay_cc != 'new') {
+                // Update cvv to id card
+                $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
+                $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
+                        'cvv2' => $cvv2
+                    ], 
+                    [
+                        'sk' => $this->sk
+                    ]);
+                if($dataCVV->http_code != 200) {
+                    throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
+                }   
                 $charge_request['source_id'] = $openpay_cc;
             }
 
@@ -558,8 +571,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'openpay_status' => $charge->status));
             }
             
-            $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
-            $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
             
             // Registra el ID de la transacción de Openpay
             $order->setExtOrderId($charge->id);   
@@ -818,6 +829,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $cards = $this->getCreditCards($customer, $has_openpay_account->created_at);
             
             foreach ($cards as $card) {                
+                /** This handle the way to get the bin and the last four digits of the credit cards in frontend*/                
                 array_push($list, array('value' => $card->id, 'name' => strtoupper($card->brand).' '.$card->card_number));
             }
             

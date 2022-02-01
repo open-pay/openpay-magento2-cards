@@ -69,14 +69,13 @@ define(
         var card_old = null;
         $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
             var card = $(this).val();
-            
+            var urlStore = window.checkoutConfig.payment.url_store;
+            var months = window.checkoutConfig.payment.months_interest_free;
+            var country = window.checkoutConfig.payment.country;
+            let isAvailableInstallmentsPE = window.checkoutConfig.payment.isAvailableInstallments;
             
             var bin = null;                   
             if (card.length >= 6) {
-                var urlStore = window.checkoutConfig.payment.url_store;
-                var months = window.checkoutConfig.payment.months_interest_free;
-                var country = window.checkoutConfig.payment.country;
-                let isAvailableInstallmentsPE = (window.checkoutConfig.payment.isAvailableInstallments == '1') ? true : false ;
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
@@ -161,49 +160,14 @@ define(
             creditCardOption: function() {
                 customerData = quote.billingAddress._latestValue;
                 console.log('#openpay_cc', $('#openpay_cc').val());
-                var card = $( "#openpay_cc option:selected" ).text();
-                card = card.substring(card.length-16);
-                var urlStore = window.checkoutConfig.payment.url_store;
-                var months = window.checkoutConfig.payment.months_interest_free;
-                var country = window.checkoutConfig.payment.country;
-                let total = window.checkoutConfig.payment.total;
-                
-                
-                /** Installments supported in MX, CO, PE */
-                var bin = card.substring(0, 6);
-                $.ajax({
-                    url : urlStore+'openpay/payment/getTypeCard',
-                    type : 'POST',
-                    showLoader: true,
-                    data: {
-                        card_bin: bin,
-                        amount: total
-                    },
-                    dataType:'json',
-                    success : function(data) {
-                        if(data.status == 'success'){
-                            window.handleShowOrHideInstallments(data, country, months);
-                        }else{
-                            $("#openpay_cards_interest_free").hide();
-                            $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
-                            $("#total-monthly-payment").hide();
-                        }
-                    },
-                    error : function(request,error)
-                    {
-                        console.log("Error");
-                        $("#openpay_cards_interest_free").hide();
-                        $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
-                        $("#total-monthly-payment").hide();
-                        $("#openpay_installments").hide();
-                        $('#openpay_installments option[value="1"]').attr("selected",true);
-                    }
-                });
+                let ccOptionArray = $( "#openpay_cc option:selected" ).text().split(' ');
+                let card = ccOptionArray[ccOptionArray.length - 1];
                 
                 if ($('#openpay_cc').val() !== "new") {                                 
                     $('#save_cc').prop('checked', false);                
                     $('#save_cc').prop('disabled', true);                 
                     var binValidate = Number(card.substring(0,6));
+                    $('#openpay_cards_cc_number').val(binValidate).trigger('keypress');
                     $('#openpay_cards_cc_number').val(binValidate).change();                                 
                     $("#openpay_cards_expiration").val("").change();
                     $("#openpay_cards_expiration_yr").val("").change();

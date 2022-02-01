@@ -36,7 +36,7 @@
         <div class="fieldset">            
             <h3>Información de Pago</h3>
             <select id="openpay_cc" name="openpay_cc" class="select" data-bind="
-                visible: (canSaveCC() || existsOneCreditCard()) && isLoggedIn(),
+                visible: existsOneCreditCard() && isLoggedIn(),
                 event:{ change: creditCardOption() },
                 options: getCreditCardList(), optionsText: 'name', optionsValue: 'value'"
             ></select>
