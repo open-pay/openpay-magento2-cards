@@ -27,6 +27,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Openpay\Cards\Model\Utils\AddressFormat;
 use Openpay\Cards\Model\Utils\ProductFormat;
 use Openpay\Cards\Model\Utils\OpenpayRequest;
+use Openpay\Cards\Model\Utils\Currency;
 
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -78,6 +79,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $canceled_openpay = '';
     protected $isAvailableInstallments;
     protected $openpayRequest;
+    
+    /**
+     * @var Currency
+     */
+    protected $currencyUtils;
 
     /**
      * @var Customer
@@ -116,6 +122,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param WriterInterface $configWriter
      * @param AddressFormat $addressFormat
      * @param ProductFormat $productFormat
+     * @param OpenpayRequest $openpayRequest
+     * @param Currency $currencyUtils
      */
     public function __construct(
             StoreManagerInterface $storeManager,
@@ -138,6 +146,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             AddressFormat $addressFormat,
             ProductFormat $productFormat,
             OpenpayRequest $openpayRequest,
+            Currency $currencyUtils,
             array $data = array()            
     ) {
         
@@ -206,6 +215,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         $this->openpay = $openpay;
         $this->openpayRequest = $openpayRequest;
+
+        $this->currencyUtils = $currencyUtils;
+        $this->supported_currency_codes = $this->currencyUtils->getSupportedCurrenciesByCountryCode($this->country);
 
         if($this->merchant_classification === 'eglobal'){
             if(empty($this->getConfigData('affiliation_bbva'))){
@@ -863,27 +875,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
 
     /**
-     * Availability for currency
-     *
-     * @param string $currencyCode
-     * @return bool
-     */
-    public function canUseForCurrency($currencyCode) {
-        switch($this->country) {
-            case "MX":
-                return in_array($currencyCode, $this->supported_currency_codes);
-            break;
-            case "CO":
-                return $currencyCode == 'COP';
-            break;
-            case "PE":
-                return $currencyCode == 'PEN';
-            break;
-        }
-        return false;
-    }
-
-    /**
      * @return string
      */
     public function getMerchantId() {
@@ -931,12 +922,17 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         return $classification;
     }
-
-
-//    public function getMinimumAmount() {
-//        return $this->minimum_amount;
-//    }
     
+    public function validateSettings() {
+        $supportedCurrencies = $this->supported_currency_codes;
+        
+        if (!$this->currencyUtils->isSupportedCurrentCurrency($supportedCurrencies)) {
+            $currenciesAsString = implode(', ', $supportedCurrencies);
+            throw new \Magento\Framework\Validator\Exception(__('The current currency is not suported, supported currencies: ' . $currenciesAsString));
+        }
+        return $this->getMerchantInfo();
+    }
+
     public function getCode() {
         return $this->_code;
     }
