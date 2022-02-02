@@ -7,12 +7,12 @@ use \Magento\Store\Model\StoreManagerInterface;
 class Currency 
 {
     /**
-     * @var StoreManagerInterface
+     * @var string
      */
-    protected $_storeManager;
-
+    protected $currentCurrency;
+    
     public function __construct(StoreManagerInterface $storeManager) {
-        $this->_storeManager = $storeManager;
+        $this->currentCurrency = $storeManager->getStore()->getCurrentCurrency()->getCode();
     }
 
 
@@ -28,7 +28,6 @@ class Currency
         switch ($countryCode) {
             case 'MX':
                 $currencies[] = 'MXN';
-                //$currencies[] = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
                 return $currencies;
             case 'CO':
                 $currencies[] = 'COP';
@@ -48,7 +47,15 @@ class Currency
      * @return array
      */
     public function isSupportedCurrentCurrency (array $supportedCurrencies) : bool {
-        $currentCurrency = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
-        return in_array($currentCurrency, $supportedCurrencies);
+        return in_array($this->currentCurrency, $supportedCurrencies);
+    }
+
+    /**
+     * Return the current currency
+     * 
+     * @return string
+     */
+    public function getCurrentCurrency () : string {
+        return $this->currentCurrency;
     }
 }

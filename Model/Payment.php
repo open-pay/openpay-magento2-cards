@@ -928,7 +928,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         
         if (!$this->currencyUtils->isSupportedCurrentCurrency($supportedCurrencies)) {
             $currenciesAsString = implode(', ', $supportedCurrencies);
-            throw new \Magento\Framework\Validator\Exception(__('The current currency is not suported, supported currencies: ' . $currenciesAsString));
+            throw new \Magento\Framework\Validator\Exception(__('The '. $this->currencyUtils->getCurrentCurrency() .' currency is not suported, the supported currencies are: ' . $currenciesAsString));
         }
         return $this->getMerchantInfo();
     }
