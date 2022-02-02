@@ -47,7 +47,7 @@ class MerchantInfo implements ObserverInterface
      * @param Observer $observer          
      */
     public function execute(Observer $observer) {
-        return $this->config->getMerchantInfo();
+        return $this->config->validateSettings();
     }
 
 }

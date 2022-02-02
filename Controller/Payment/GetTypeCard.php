@@ -19,20 +19,24 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
     
     protected $payment;
     protected $logger;
+    protected $openpayRequest;
     /**
      * 
      * @param Context $context
      * @param OpenpayPayment $payment
      * @param \Psr\Log\LoggerInterface $logger_interface
+     * @param \Openpay\Cards\Model\Utils\OpenpayRequest $openpayRequest
      */
     public function __construct(
         Context $context,
         OpenpayPayment $payment,
-        \Psr\Log\LoggerInterface $logger_interface
+        \Psr\Log\LoggerInterface $logger_interface,
+        \Openpay\Cards\Model\Utils\OpenpayRequest $openpayRequest
     ) {
         parent::__construct($context);
         $this->payment = $payment;
         $this->logger = $logger_interface;
+        $this->openpayRequest = $openpayRequest;
     }
     public function execute() {
         $data = null;
@@ -40,11 +44,12 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
         $openpay = $this->payment->getOpenpayInstance();
 
         try {
-            $this->logger->debug('#CardBin', array('cardInfo' => $post['card_bin'].$this->payment->getCountry()));
-            $country = $this->payment->getCountry();
+            $this->logger->debug('#CardBin', array('cardInfo' => $post['card_bin']));
             
-            if ($country == 'MX') {
-                $openpay = $this->payment->getOpenpayInstance();
+            $country = $this->payment->getCountry();
+            $openpay = $this->payment->getOpenpayInstance();
+
+            if($country == 'MX') {
                 $cardInfo = $openpay->bines->get($post['card_bin']);
                 $data = array(
                     'status' => 'success',
@@ -53,20 +58,20 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
             }
             
             if ($country == 'CO') {
-                $cardInfo = $this->requestOpenpay('/cards/validate-bin?bin='.$post['card_bin'], $country, $this->payment->isSandbox(), "GET");
+                $cardInfo = $this->openpayRequest->make('/cards/validate-bin?bin='.$post['card_bin'], $country, $this->payment->isSandbox(), "GET");
                 $data = array(
                     'status' => 'success',
                     'card_type' => $cardInfo->card_type
                 );
             }
 
-            if ($country == 'PE') {
+            if($country == 'PE') {
                 $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
                 $dataRequest = array(
                     'amount' => $post['amount'],
                     'currency' => 'PEN'
                 );
-                $cardInfo = $this->requestOpenpay($path, $country, $this->payment->isSandbox(), "POST", $dataRequest);
+                $cardInfo = $this->openpayRequest->make($path, $country, $this->payment->isSandbox(), "POST", $dataRequest);
                 $installments = (count($cardInfo->installments) == 0) ? [] : $cardInfo->installments;
                 $data = array(
                     'status' => 'success',
@@ -86,36 +91,4 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
         $resultJson->setData($data);
         return $resultJson;
     }
-
-    public function requestOpenpay($api, $country, $is_sandbox,  $method = 'GET', $data = null) {
-        $country = strtolower($country);
-        $url =  sprintf('https://api.openpay.%s/v1', $country);
-        $sandbox_url = sprintf('https://sandbox-api.openpay.%s/v1', $country) ;
-    
-        $absUrl = $is_sandbox ? $sandbox_url : $url;
-        $absUrl .= $api;
-    
-        $ch = curl_init();
-        if ($method == 'POST' && $data) {
-            $payload = json_encode($data);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-        }
-        curl_setopt($ch, CURLOPT_URL, $absUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        $result = curl_exec($ch);
-    
-        if (curl_exec($ch) === false) {
-            $this->logger->error("Curl error", array("curl_errno" => curl_errno($ch), "curl_error" => curl_error($ch)));
-        } else {
-            $info = curl_getinfo($ch);
-            $this->logger->debug("requestOpenpay", array("HTTP code " => $info['http_code'], "on request to" => $info['url']));
-        }
-    
-        curl_close($ch);
-    
-        return json_decode($result);
-    }
-
 }
