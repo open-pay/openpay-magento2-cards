@@ -501,6 +501,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['iva'] = $this->iva;
         }
 
+        if($this->country === 'PE'){
+            $charge_request['capture'] = $capture;
+        }
+
         // Meses sin intereses (solo para MX)
         $interest_free = $this->getInfoInstance()->getAdditionalInformation('interest_free');
         if($interest_free > 1 && $this->country === 'MX'){
