@@ -479,13 +479,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             'order_id' => $order->getIncrementId(),
             'source_id' => $token,
             'device_session_id' => $device_session_id,
-            'customer' => $customer_data
+            'customer' => $customer_data,
+            'capture' => $capture
         );
 
         if ($this->country === 'MX') {
             $charge_request['use_card_points'] = $use_card_points; 
-            $charge_request['capture'] = $capture;
-
             // 3D Secure
             if ($this->charge_type == '3d') {
                 $charge_request['use_3d_secure'] = true;
@@ -499,10 +498,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         
         if ($this->country === 'CO') {
             $charge_request['iva'] = $this->iva;
-        }
-
-        if($this->country === 'PE'){
-            $charge_request['capture'] = $capture;
         }
 
         // Meses sin intereses (solo para MX)
