@@ -103,7 +103,9 @@
                     <label>Configuración del cargo</label>
                     <source_model>Openpay\Cards\Model\Source\PaymentAction</source_model>
                     <depends>
-                        <field id="country">MX</field>
+                        <field id="country" separator="|">
+                            <value>MX|PE</value>
+                        </field>
                         <field id="merchant_classification">Openpay</field>
                     </depends>
                     <comment>Indica si el cargo se hace o no inmediatamente, con la pre-autorización solo se reserva el monto para ser confirmado o cancelado posteriormente. Las pre-autorizaciones no pueden ser utilizadas en combinación con pago con puntos Bancomer.</comment>
