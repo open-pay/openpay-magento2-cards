@@ -14,4 +14,7 @@
     <event name="admin_system_config_changed_section_payment">
         <observer name="openpaycards_observer_check_config" instance="Openpay\Cards\Observer\MerchantInfo"/>
     </event>
+    <event name="admin_system_config_change_order_status">
+        <observer name="openpaycards_observer_check_order_status" instance="Openpay\Cards\Observer\CreateWebhook"/>
+    </event>
 </config>

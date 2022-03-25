@@ -1059,6 +1059,58 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         return false;
     }
 
+    /**
+     * Create webhook
+     * @return mixed
+     */
+    public function createWebhook() {
+        $openpay = $this->getOpenpayInstance();
+        
+        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        $uri = $base_url."openpay/cards/webhook";       
+        $webhooks = $openpay->webhooks->getList([]);
+        $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
+        if($webhookCreated){
+            return $webhookCreated;
+        }
+
+        $webhook_data = array(
+            'url' => $uri,
+            'event_types' => array(
+                'verification',
+                'charge.succeeded',
+                'charge.created',
+                'charge.cancelled',
+                'charge.failed',
+                'payout.created',
+                'payout.succeeded',
+                'payout.failed',
+                'spei.received',
+                'chargeback.created',
+                'chargeback.rejected',
+                'chargeback.accepted',
+                'transaction.expired'
+            )
+        );
+
+        try {
+            $webhook = $openpay->webhooks->add($webhook_data);
+            return $webhook;
+        } catch (Exception $e) {
+            return $this->error($e);
+        }
+    }
+
+    private function isWebhookCreated($webhooks, $uri) {
+        foreach ($webhooks as $webhook) {
+            if ($webhook->url === $uri) {
+                return $webhook;
+            }
+        }
+        return null;
+    }
+
+
     public function getCustomStatus($status) {
         switch($status){
             case 'processing':
