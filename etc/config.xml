@@ -25,13 +25,12 @@
         <payment>
             <openpay_cards>
                 <active>0</active>
-                <model>Openpay\Cards\Model\Payment</model>                
-                <order_status>pending</order_status>                
-                <country>MX</country>                
-                <merchant_classification>general</merchant_classification>                
+                <model>Openpay\Cards\Model\Payment</model>
+                <country>MX</country>
+                <merchant_classification>general</merchant_classification>
                 <title>Pago con tarjetas de crédito o débito</title>
-                <sandbox_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />                
-                <live_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />     
+                <sandbox_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <live_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <cctypes_mx>AE,VI,MC,CN</cctypes_mx>
                 <cctypes_co>AE,VI,MC</cctypes_co>
                 <cctypes_pe>AE,VI,MC,DN</cctypes_pe>
