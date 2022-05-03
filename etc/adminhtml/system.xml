@@ -30,21 +30,6 @@
                     <label>País</label>
                     <source_model>Openpay\Cards\Model\Source\Countries::getOptions</source_model>
                 </field>
-                <field id="merchant_classification" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Clasificación del Comercio</label>
-                    <frontend_model>Openpay\Cards\Block\System\Config\Form\Field\Disable</frontend_model>
-                    <depends>
-                        <field id="country">MX</field>
-                    </depends>
-                </field>
-                <field id="affiliation_bbva" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Número de afiliación BBVA</label>
-                    <validate>validate-zero-or-greater validate-digits</validate>
-                    <comment>Ingresar afiliación BBVA.</comment>
-                    <depends>
-                        <field id="merchant_classification">BBVA</field>
-                    </depends>
-                </field>
                 <field id="title" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="0">
                     <label>Título</label>
                 </field>
@@ -91,7 +76,6 @@
                     <source_model>Openpay\Cards\Model\Source\ChargeTypes::getTypes</source_model>
                     <depends>
                         <field id="country">MX</field>
-                        <field id="merchant_classification">Openpay</field>
                     </depends>
                     <comment>¿Qué es la autenticación selectiva? Es cuando se detecta riesgo en la transacción y se manda por 3D Secure.</comment>
                 </field>
@@ -102,7 +86,6 @@
                         <field id="country" separator="|">
                             <value>MX|PE</value>
                         </field>
-                        <field id="merchant_classification">Openpay</field>
                     </depends>
                     <comment>Indica si el cargo se hace o no inmediatamente, con la pre-autorización solo se reserva el monto para ser confirmado o cancelado posteriormente. Las pre-autorizaciones no pueden ser utilizadas en combinación con pago con puntos Bancomer.</comment>
                 </field>
