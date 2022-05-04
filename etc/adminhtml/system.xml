@@ -97,12 +97,7 @@
                     </depends>
                     <comment>Recibe pagos con puntos Bancomer habilitando esta opción. Esta opción no se puede combinar con pre-autorizaciones o MSI.</comment>
                 </field>
-                <field id="save_cc" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Guardar tarjetas</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
-                </field>
-                <field id="cctypes_mx" translate="label" type="multiselect" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes_mx" translate="label" type="multiselect" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesMx</source_model>
                     <depends>
@@ -110,7 +105,7 @@
                     </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>
-                <field id="cctypes_co" translate="label" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes_co" translate="label" type="multiselect" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesCo</source_model>
                     <depends>
@@ -118,7 +113,7 @@
                     </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>
-                <field id="cctypes_pe" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes_pe" translate="label" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesPe</source_model>
                     <depends>
@@ -126,7 +121,7 @@
                     </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción</comment>
                 </field>
-                <field id="interest_free" translate="label" type="multiselect" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="interest_free" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Meses sin Intereses</label>
                     <source_model>Openpay\Cards\Model\Source\MonthsInterestFree::getMonths</source_model>
                     <depends>
@@ -134,7 +129,7 @@
                     </depends>
                     <comment>Presione ctrl y clic para seleccionar más de una opción, esta opción no se puede combinar con pago con puntos. Recomendamos revises la documentación de los MSI (https://www.openpay.mx/costos.html).</comment>
                 </field>
-                <field id="minimum_amounts" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="minimum_amounts" translate="label" type="select" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Configurar Montos Mínimos MSI</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Configuración de montos mínimos para promociones a MSI</comment>
@@ -142,7 +137,7 @@
                         <field id="country">MX</field>
                     </depends>
                 </field>
-                <field id="installments" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="installments" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Configurar Cuotas</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Configuración para activar cuotas a sus clientes</comment>
@@ -150,7 +145,7 @@
                         <field id="country">PE</field>
                     </depends>
                 </field>
-                <field id="three_months" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="three_months" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>3 Meses</label>
                     <validate>required-entry validate-digits validate-digits-range digits-range-300-99999</validate>
                     <depends>
@@ -159,7 +154,7 @@
                     </depends>
                     <comment>Monto mínimo por default $300. El monto deberá ser mayor al asignado por default</comment>
                 </field>
-                <field id="six_months" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="six_months" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>6 Meses</label>
                     <validate>required-entry validate-digits validate-digits-range digits-range-600-99999</validate>
                     <depends>
@@ -168,7 +163,7 @@
                     </depends>
                     <comment>Monto mínimo por default $600. El monto deberá ser mayor al asignado por default</comment>
                 </field>
-                <field id="nine_months" translate="label" type="text" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="nine_months" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>9 Meses</label>
                     <validate>required-entry validate-digits validate-digits-range digits-range-900-99999</validate>
                     <depends>
@@ -177,7 +172,7 @@
                     </depends>
                     <comment>Monto mínimo por default $900. El monto deberá ser mayor al asignado por default</comment>
                 </field>
-                <field id="twelve_months" translate="label" type="text" sortOrder="24" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="twelve_months" translate="label" type="text" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>12 Meses</label>
                     <validate>required-entry validate-digits validate-digits-range digits-range-1200-99999</validate>
                     <depends>
@@ -186,7 +181,7 @@
                     </depends>
                     <comment>Monto mínimo por default $1200. El monto deberá ser mayor al asignado por default</comment>
                 </field>
-                <field id="eighteen_months" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="eighteen_months" translate="label" type="text" sortOrder="24" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>18 Meses</label>
                     <validate>required-entry validate-digits validate-digits-range digits-range-1800-99999</validate>
                     <depends>
@@ -195,7 +190,7 @@
                     </depends>
                     <comment>Monto mínimo por default $1800. El monto deberá ser mayor al asignado por default</comment>
                 </field>
-                <field id="iva" translate="label" type="text" sortOrder="26" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="iva" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>IVA</label>
                     <validate>required-entry validate-zero-or-greater validate-digits</validate>
                     <comment>Debe contener el valor de IVA, es campo solo informativo, no tiene ningún efecto sobre el campo amount.</comment>
@@ -203,32 +198,39 @@
                         <field id="country">CO</field>
                     </depends>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="27" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="26" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago aplicable para países</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="28" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="27" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Pago para países específicos</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>
-                <field id="processing_openpay" translate="label" type="select" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="processing_openpay" translate="label" type="select" sortOrder="28" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Openpay processing</label>
                     <source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
                     <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "processing"</comment>
                 </field>
-                <field id="pending_payment_openpay" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="pending_payment_openpay" translate="label" type="select" sortOrder="29" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Openpay Pendiente de Pago</label>
                     <source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
                     <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "payment_review"</comment>
                 </field>
-                <field id="canceled_openpay" translate="label" type="select" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="canceled_openpay" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Openpay Cancelado</label>
                     <source_model>Openpay\Cards\Model\Config\OrderStatuses</source_model>
                     <comment>Estatus que tendrá la orden una vez que el módulo de tarjetas lo establezca en "canceled"</comment>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="32" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sort_order" translate="label" type="text" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
                 </field>
+                <group id="extra_settings" translate="label" type="text" sortOrder="32" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Extras</label>
+                    <field id="chargeback_guarantee" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Activar garantia de contracargos</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                </group>
             </group>
         </section>
     </system>

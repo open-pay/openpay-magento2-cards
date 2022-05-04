@@ -22,7 +22,7 @@
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
         <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
         <img src="https://img.openpay.mx/plugins/openpay-logo_106x25.png" class="payment-method__logo">
-    </div>    
+    </div>
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
@@ -32,17 +32,13 @@
             <!-- ko template: getTemplate() --><!-- /ko -->
             <!--/ko-->
         </div>
-        
-        <div class="fieldset">            
-            <h3>Información de Pago</h3>
-            <select id="openpay_cc" name="openpay_cc" class="select" data-bind="
-                visible: existsOneCreditCard() && isLoggedIn(),
-                event:{ change: creditCardOption() },
-                options: getCreditCardList(), optionsText: 'name', optionsValue: 'value'"
-            ></select>
-        </div>                
 
-        <form id="openpay_form" class="form" data-bind="attr: {'id': getCode() + '-form'}">    
+        <div class="fieldset">
+            <h3>Información de Pago</h3>
+            <input type="hidden" id="openpay_cc" name="openpay_cc" value="new" />
+        </div>
+
+        <form id="openpay_form" class="form" data-bind="attr: {'id': getCode() + '-form'}">
             <input type="hidden" id="openpay_token" name="openpay_token" value="" />
             <input type="hidden" name="use_card_points" id="use_card_points" value="false" />
             <!-- Custom Form Openpay -->
@@ -166,46 +162,40 @@
                     </div>
                 </div>
                 <!-- /ko -->
-            </fieldset> 
-            
-            <div id="save_cc_fieldset" class="fieldset" data-bind="visible: canSaveCC() && isLoggedIn()" style="margin-bottom: 20px;">
-                <label for="save_cc" class="label">
-                    <input type="checkbox" name="save_cc" id="save_cc" /> <span style="font-weight: 600;">Guardar tarjeta</span>
-                </label>    
-            </div>
-            
-            <div id="openpay_cards_interest_free" class="fieldset" style="display: none;">                
+            </fieldset>
+
+            <div id="openpay_cards_interest_free" class="fieldset" style="display: none;">
                 <div class="field type">
                     <label class="label" for="openpay_cards_interest_free" style="font-weight: 600; margin-bottom: 5px;">Meses sin intereses</label>
                     <div class="control">
-                        <select id="interest_free" name="interest_free" class="select" style="width: auto;" data-bind="options: getMonthsInterestFree(), 
+                        <select id="interest_free" name="interest_free" class="select" style="width: auto;" data-bind="options: getMonthsInterestFree(),
                        optionsText: function(month) {
                            return month > 1 ? month +' meses' : 'Pago de contado';
                        }"></select>
-                    </div>                    
-                </div>     
+                    </div>
+                </div>
                 <div id="total-monthly-payment" class="field type" style="display: none;">
-                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>                
+                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>
                     <p class="openpay-total" style="font-size: 2em; font-weight: bold;">$<span id="monthly-payment">100</span></p>
-                </div>                
-            </div>    
-            
-            <div id="openpay_installments" class="fieldset" style="display: none;">      
+                </div>
+            </div>
+
+            <div id="openpay_installments" class="fieldset" style="display: none;">
                 <div class="field type">
                     <label class="label" for="openpay_installments" style="font-weight: 600; margin-bottom: 5px;">Pago en cuotas</label>
                     <div class="control">
-                        <select id="installments" name="installments" class="select" style="width: auto;" data-bind="options: getInstallments(), 
+                        <select id="installments" name="installments" class="select" style="width: auto;" data-bind="options: getInstallments(),
                        optionsText: function(installment) {
                            return installment > 1 ? installment +' cuotas' : 'Una sola cuota';
                        }"></select>
-                    </div>                    
-                </div>     
+                    </div>
+                </div>
                 <div id="total-monthly-payment" class="field type" style="display: none;">
-                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>                
+                    <label style="font-weight: 600; margin-bottom: 5px;">Estarías pagando mensualmente</label>
                     <p class="openpay-total" style="font-size: 2em; font-weight: bold;">$<span id="monthly-payment">100</span></p>
-                </div>                
-            </div>    
-            
+                </div>
+            </div>
+
         </form>
 
         <div class="checkout-agreements-block">
