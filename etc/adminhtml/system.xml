@@ -97,11 +97,6 @@
                     </depends>
                     <comment>Recibe pagos con puntos Bancomer habilitando esta opción. Esta opción no se puede combinar con pre-autorizaciones o MSI.</comment>
                 </field>
-                <field id="save_cc" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Guardar tarjetas</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
-                </field>
                 <field id="cctypes_mx" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesMx</source_model>
@@ -229,6 +224,13 @@
                 <field id="sort_order" translate="label" type="text" sortOrder="34" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
                 </field>
+                <group id="extra_settings" translate="label" type="text" sortOrder="51" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Extras</label>
+                    <field id="chargeback_guarantee" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Activar garantia de contracargos</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                </group>
             </group>
         </section>
     </system>
