@@ -6,10 +6,5 @@ var config = {
         'bootstrap': {            
             'deps': ['jquery']
         }
-    },
-    map: {
-        '*': {
-            'Magento_Payment/js/model/credit-card-validation/credit-card-number-validator/credit-card-type':'Openpay_Cards/js/model/credit-card-validation/credit-card-number-validator/credit-card-type'       
-        }
     }
 };

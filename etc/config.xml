@@ -30,8 +30,8 @@
                 <title>Pago con tarjetas de crédito o débito</title>
                 <sandbox_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <live_sk backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
-                <cctypes>AE,VI,MC,CN</cctypes>
-                <cctypes_mx>AE,VI,MC,CN</cctypes_mx>
+                <cctypes>AE,VI,MC</cctypes>
+                <cctypes_mx>AE,VI,MC</cctypes_mx>
                 <cctypes_co>AE,VI,MC</cctypes_co>
                 <cctypes_pe>AE,VI,MC,DN</cctypes_pe>
                 <payment_action>authorize_capture</payment_action>

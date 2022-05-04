@@ -21,8 +21,7 @@ class Cctype extends \Magento\Payment\Model\Source\Cctype
         return array(
             array('value' => 'VI', 'label' => 'Visa'),
             array('value' => 'MC', 'label' => 'MasterCard'),
-            array('value' => 'AE', 'label' => 'American Express'),
-            array('value' => 'CN', 'label' => 'Carnet')              
+            array('value' => 'AE', 'label' => 'American Express')           
         );     
     }
 

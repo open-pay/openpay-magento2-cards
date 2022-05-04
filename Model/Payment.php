@@ -211,32 +211,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     public function validate() {                                     
         $info = $this->getInfoInstance();
         $openpay_cc = $info->getAdditionalInformation('openpay_cc');
-        $errorMsg = false;
-
-        switch ($this->country) {
-            case "MX":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_mx'));
-            break;
-            case "CO":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_co'));
-            break;
-            case "PE":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_pe'));
-            break;
-        }
-
-        $this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc, 'getCcType' => $info->getCcType()));                  
         
-        // Custom Validation
-        
-        /** CC_number validation is not done because it should not get into the server * */
-        if ($info->getCcType() != null && !in_array($info->getCcType(), $availableTypes)) {
-            $errorMsg = 'Credit card type is not allowed for this payment method.';
-        }
+        $this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc));                    
 
-        if ($errorMsg) {
-            $this->logger->error('captureOpenpayTransaction', array('#ERROR validate() => ' => $errorMsg));
-            throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));
+        // Si se utiliza una tarjeta nueva, se realiza la validación necesaria por Magento 
+        if ($openpay_cc == 'new') {
+            return parent::validate();
         }
 
         return $this;
@@ -614,9 +594,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             
             case "american_express":
                 $code = "AE";
-                break;
-            case "carnet":
-                $code = "CN";
                 break;
             case "diners":
                 $code = "DN";
