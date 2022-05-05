@@ -48,7 +48,7 @@
                 <processing_openpay>processing</processing_openpay>
                 <pending_payment_openpay>payment_review</pending_payment_openpay>
                 <canceled_openpay>canceled</canceled_openpay>
-                <chargeback_guarantee>1</chargeback_guarantee>
+                <chargeback_guarantee>0</chargeback_guarantee>
             </openpay_cards>
         </payment>
     </default>
