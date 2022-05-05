@@ -453,9 +453,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
 
         //Garantia de contracargos (solo para MX)
-        $this->logger->debug('$this->is_chargeback_guarantee_activated'. $this->is_chargeback_guarantee_activated);
         if ($this->country == 'MX' && $this->is_chargeback_guarantee_activated) {
-            $this->logger->debug('chargeback_guarantee EXECUTED');
             if ($this->validateAddress($shipping)){
                 $charge_request['ship_to'] = [
                     'phone_area_code'=> '+52',
