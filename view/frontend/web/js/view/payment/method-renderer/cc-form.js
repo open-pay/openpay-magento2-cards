@@ -283,6 +283,7 @@ define(
                     'additional_data': {
                         'cc_cid': this.creditCardVerificationNumber(),
                         'cc_number': this.creditCardNumber(),
+                        'cc_type': this.creditCardType(),
                         'openpay_token': $("#openpay_token").val(),
                         'device_session_id': $('#device_session_id').val(),
                         'installments': $('#installments').val(),

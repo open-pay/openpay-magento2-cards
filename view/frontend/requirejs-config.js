@@ -3,8 +3,14 @@ var config = {
         'bootstrap': 'Openpay_Cards/js/bootstrap'
     },
     'shim': {
-        'bootstrap': {            
+        'bootstrap': {
             'deps': ['jquery']
+        }
+    },
+    map: {
+        '*': {
+            creditCardType: 'Magento_Payment/js/cc-type',
+            'Magento_Payment/cc-type': 'Magento_Payment/js/cc-type'
         }
     }
 };

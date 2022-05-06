@@ -37,7 +37,6 @@ use Openpay\Data\OpenpayApiTransactionError;
 
 class Payment extends \Magento\Payment\Model\Method\Cc
 {
-
     const CODE = 'openpay_cards';
 
     protected $_code = self::CODE;
@@ -211,15 +210,33 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     public function validate() {
         $info = $this->getInfoInstance();
         $openpay_cc = $info->getAdditionalInformation('openpay_cc');
-        
-        $this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc));                    
 
-        // Si se utiliza una tarjeta nueva, se realiza la validación necesaria por Magento 
-        if ($openpay_cc == 'new') {
-            return parent::validate();
+        $errorMsg = false;
+
+        switch ($this->country) {
+            case "MX":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_mx'));
+            break;
+            case "CO":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_co'));
+            break;
+            case "PE":
+                $availableTypes = explode(',', $this->getConfigData('cctypes_pe'));
+            break;
         }
 
-        return $this;
+        //$this->logger->debug('#availableTypes = ', $availableTypes);
+        //$this->logger->debug('#validate', array('$openpay_cc' => $openpay_cc, 'getCcType' => $info->getCcType()));
+
+        if ($info->getCcType() != null && !in_array($info->getCcType(), $availableTypes)) {
+            $errorMsg = 'Credit card type is not allowed for this payment method.';
+        }
+
+        if ($errorMsg) {
+            $this->logger->error('captureOpenpayTransaction', array('#ERROR validate() => ' => $errorMsg));
+            throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));
+        }
+            return $this;
     }
 
     /**
@@ -256,6 +273,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance->setAdditionalInformation('cc_cid',
             isset($additionalData['cc_cid']) ? $additionalData['cc_cid'] : null
         );
+        $infoInstance->setAdditionalInformation('cc_type',
+            isset($additionalData['cc_type']) ? $additionalData['cc_type'] : null
+        );
+
         return $this;
     }
 
