@@ -224,10 +224,6 @@
                 <field id="sort_order" translate="label" type="text" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Orden</label>
                 </field>
-                <field id="chargeback_guarantee" translate="label" type="select" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Activar garantia de contracargos</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
             </group>
         </section>
     </system>

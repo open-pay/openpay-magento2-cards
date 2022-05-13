@@ -66,7 +66,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $supported_currency_codes = array('USD', 'MXN');
     protected $months_interest_free;
     protected $charge_type;
-    protected $is_chargeback_guarantee_activated; // Boolean
     protected $logger;
     protected $_storeManager;
     protected $iva = 0;
@@ -185,7 +184,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
         $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';
-        $this->is_chargeback_guarantee_activated = $this->getConfigData('chargeback_guarantee');
 
         $this->addressFormat = $addressFormat;
         $this->productFormat = $productFormat;
@@ -473,28 +471,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $charge_request['payment_plan'] = array('payments' => (int)$installments);
         }
 
-        //Garantia de contracargos (solo para MX)
-        if ($this->country == 'MX' && $this->is_chargeback_guarantee_activated) {
-            if ($this->validateAddress($shipping)){
-                $charge_request['ship_to'] = [
-                    'phone_area_code'=> '+52',
-                    'address' => $this->addressFormat::formatAddress($shipping),
-                    'name' => $shipping->getFirstname(),
-                    'last_name' => $shipping->getLastname(),
-                    'phone_number' => $shipping->getTelephone(),
-                    'email' => $order->getCustomerEmail(),
-                    'method'=> 'card'
-                ];
-            }
-            if ($this->validateAddress($billing)) {
-                $charge_request['billing']['address'] = $this->addressFormat::formatAddress($billing, $this->country, false);
-            }
 
-            $infoProducts = $this->productFormat->getInfoProducts($order);
-
-            $charge_request['product_sum'] = $infoProducts['productSum'];
-            $charge_request['products'] = $infoProducts['products'];
-        }
 
         try {
             $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
