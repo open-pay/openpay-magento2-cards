@@ -20,8 +20,10 @@
                name="payment[method]"
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
-        <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
-        <img src="https://img.openpay.mx/plugins/openpay-logo_106x25.png" class="payment-method__logo">
+        <label data-bind="attr: {'for': getCode()}" class="label">
+            <span>Pago con tarjetas de crédito o débito</span>
+            <img src="https://img.openpay.mx/plugins/openpay-logo_106x25.png" class="payment-method__logo">
+        </label>
     </div>
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->

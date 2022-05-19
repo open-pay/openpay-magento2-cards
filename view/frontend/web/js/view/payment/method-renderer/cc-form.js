@@ -247,8 +247,9 @@ define(
                     OpenPay.token.create(data, function(response) {
                             var token_id = response.data.id;
                             $("#openpay_token").val(token_id);
-
-                            if (!response.data.card.points_card || !useCardPoints) {
+                            console.log("MSI" + $("#interest_free").val() );
+                            var interest_free = $("#interest_free").val();
+                            if (!response.data.card.points_card || !useCardPoints || interest_free > 1) {
                                 console.log('NO useCardPoints');
                                 self.placeOrder();
                                 return;
