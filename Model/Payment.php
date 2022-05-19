@@ -379,7 +379,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
-        $order = $payment->getOrder();                
+        $order = $payment->getOrder();    
         $this->logger->debug('#capture', array('$order_id' => $order->getIncrementId(), '$trx_id' => $payment->getLastTransId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
         
         if ($amount <= 0) {
@@ -399,12 +399,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected function captureOpenpayTransaction(\Magento\Payment\Model\InfoInterface $payment, $amount){
         $order = $payment->getOrder();                
         $customer_id = $order->getExtCustomerId();
+        $trx = str_replace('-capture', '', $payment->getLastTransId());
         
-        $this->logger->debug('#captureOpenpayTransaction', array('$trx_id' => $payment->getLastTransId(), '$customer_id' => $customer_id, '$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
+        $this->logger->debug('#captureOpenpayTransaction', array('$trx_id' => $trx, '$customer_id' => $customer_id, '$order_id' => $order->getIncrementId(), '$status' => $order->getStatus(), '$amount' => $amount));                    
                 
         try {
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
-            $charge = $this->getOpenpayCharge($payment->getLastTransId(), $customer_id);
+            $charge = $this->getOpenpayCharge($trx, $customer_id);
             $captureData = array('amount' => $amount);
             $charge->capture($captureData);
 
