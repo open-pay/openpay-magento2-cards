@@ -30,6 +30,8 @@ class Success extends \Magento\Framework\App\Action\Action
     protected $transactionRepository;
     protected $searchCriteriaBuilder;
     protected $coreRegistry;
+    protected $quoteRepository;
+    protected $messageError;
     
     /**
      * 
@@ -47,6 +49,8 @@ class Success extends \Magento\Framework\App\Action\Action
      * @param \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository
      * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
      * @param \Magento\Framework\Registry $coreRegistry
+     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
+     * @param \Magento\Framework\Message\ManagerInterface
      * 
      */
     public function __construct(
@@ -63,7 +67,9 @@ class Success extends \Magento\Framework\App\Action\Action
             \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
             \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
             \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
-            \Magento\Framework\Registry $coreRegistry
+            \Magento\Framework\Registry $coreRegistry,
+            \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
+            \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
@@ -79,6 +85,8 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->transactionRepository = $transactionRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->coreRegistry = $coreRegistry;
+        $this->quoteRepository = $quoteRepository;
+        $this->messageManager = $messageManager;
     }
     /**
      * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
@@ -127,12 +135,13 @@ class Success extends \Magento\Framework\App\Action\Action
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
                 $order->setStatus($statusCanceled);
                 $order->save();
+                $quote = $this->quoteRepository->get($quote_id);
+                $quote->setIsActive(true)->save();
+                $this->checkoutSession->replaceQuote($quote);
                 $this->logger->debug('#3D Secure', array('msg' => 'Autenticación de 3D Secure fallida'));
-                $resultPage = $this->resultPageFactory->create();
                 $code = $charge->error_code;
-                $this->coreRegistry->register('messageError', $this->getMessageError($code));
-                return $resultPage;
-                        
+                $this->messageManager->addErrorMessage($this->getMessageError($code). ' .Intente con otra tarjeta.');
+                return $this->resultRedirectFactory->create()->setPath('checkout/cart');
             }
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             $this->orderSender->send($order, true);
