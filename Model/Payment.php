@@ -669,10 +669,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $has_openpay_account = $this->hasOpenpayAccount($customerId);
         $cards = $this->getCreditCards($openpay_customer, $has_openpay_account->created_at);
 
-        $card_number_bin = substr($card_number, 0, 6);
+        $card_number_bin = substr($card_number, 0, 8);
         $card_number_complement = substr($card_number, -4);
         foreach ($cards as $card) {
-            if($card_number_bin == substr($card->card_number, 0, 6) && $card_number_complement == substr($card->card_number, -4)) {
+            if($card_number_bin == substr($card->card_number, 0, 8) && $card_number_complement == substr($card->card_number, -4)) {
                 $errorMsg = "La tarjeta ya se encuentra registrada, seleccionala de la lista de tarjetas.";
                 $this->logger->error('validateNewCard', array('#ERROR validateNewCard() => ' => $errorMsg));
                 throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));

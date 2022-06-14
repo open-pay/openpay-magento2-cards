@@ -48,15 +48,18 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
             
             $country = $this->payment->getCountry();
             $openpay = $this->payment->getOpenpayInstance();
+            $sk = $this->payment->getPrivateKey();
 
             if($country == 'MX') {
-                $cardInfo = $openpay->bines->get($post['card_bin']);
+                $path = sprintf('/%s/bines/man/%s', $this->payment->getMerchantId(), $post['card_bin']);
+                $cardInfo = $this->openpayRequest->make($path, $country, $this->payment->isSandbox(), "GET", [],['sk' => $sk]);
+
                 $data = array(
                     'status' => 'success',
-                    'card_type' => $cardInfo->type
+                    'card_type' => $cardInfo->type,
+                    'bin' => $cardInfo->bin,
                 );
             }
-            
             if ($country == 'CO') {
                 $cardInfo = $this->openpayRequest->make('/cards/validate-bin?bin='.$post['card_bin'], $country, $this->payment->isSandbox(), "GET");
                 $data = array(
@@ -64,7 +67,6 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
                     'card_type' => $cardInfo->card_type
                 );
             }
-
             if($country == 'PE') {
                 $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
                 $dataRequest = array(

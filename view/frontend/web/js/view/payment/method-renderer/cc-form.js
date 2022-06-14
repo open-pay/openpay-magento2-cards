@@ -73,16 +73,16 @@ define(
             var months = window.checkoutConfig.payment.months_interest_free;
             var country = window.checkoutConfig.payment.country;
             let isAvailableInstallmentsPE = window.checkoutConfig.payment.isAvailableInstallments;
-            
+            let lng = country == 'PE' ? 6 : 8; 
             var bin = null;                   
-            if (card.length >= 6) {
+            if (card.length >= lng) {
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
                 if (country == 'PE' && !isAvailableInstallmentsPE ){
                     return;
                 }
-                var bin = card.substring(0, 6);
+                var bin = card.substring(0, lng);
                 if(card_old  != bin){
                     card_old = bin;
                     $.ajax({
