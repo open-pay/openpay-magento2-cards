@@ -82,11 +82,13 @@ define(
             let isAvailableInstallmentsPE = window.checkoutConfig.payment.isAvailableInstallments;
             let lng = country == 'PE' ? 6 : 8;
             var bin = null;
+
             if (card.length >= lng) {
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
-                if (country == 'PE' && !isAvailableInstallmentsPE ){
+                if (country == 'PE' && isAvailableInstallmentsPE == "0" ){
+                    console.log("Return without request bin PE");
                     return;
                 }
                 var bin = card.substring(0, lng);
