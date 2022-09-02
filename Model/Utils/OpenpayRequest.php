@@ -23,9 +23,14 @@ class OpenpayRequest {
     
         $absUrl = $is_sandbox ? $sandbox_url : $url;
         $absUrl .= $path;
-    
         $ch = curl_init();
-        if ($method != 'GET' && $data) {
+
+        if (!empty($data) && $method == 'GET') {
+            $info = http_build_query($data);
+            $absUrl = $absUrl."?".$info;
+        }
+
+        if(!empty($data) && $method == 'POST'){
             $payload = json_encode($data);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
@@ -34,6 +39,8 @@ class OpenpayRequest {
         if ($auth != null) {
             curl_setopt($ch, CURLOPT_USERPWD, $auth['sk'].':'.'');
         }
+
+
         curl_setopt($ch, CURLOPT_URL, $absUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);

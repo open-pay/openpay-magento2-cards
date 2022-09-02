@@ -68,7 +68,7 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
                 );
             }
             if($country == 'PE') {
-                $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
+                /*$path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
                 $dataRequest = array(
                     'amount' => $post['amount'],
                     'currency' => 'PEN'
@@ -79,6 +79,16 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
                     'status' => 'success',
                     'card_type' => $cardInfo->cardType,
                     'installments' => $installments
+                );*/
+                /*###########################################################*/
+                $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
+                $cardInfo = $this->openpayRequest->make($path, $country, $this->payment->isSandbox());
+                $installments = (count($cardInfo->installments) == 0) ? [] : $cardInfo->installments;
+                $data = array(
+                    'status' => 'success',
+                    'card_type' => $cardInfo->cardType,
+                    'installments'  => $installments,
+                    'withInterest' => $cardInfo->withInterest
                 );
             }
         } catch (\Exception $e) {
