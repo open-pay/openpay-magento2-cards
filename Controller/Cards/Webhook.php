@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * @category    Payments
  * @package     Openpay_Stores
  * @author      Federico Balderas
@@ -12,6 +12,8 @@ namespace Openpay\Cards\Controller\Cards;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
+use Magento\Sales\Model\ResourceModel\Order\Invoice\Collection as InvoiceCollection;
+use Magento\Sales\Model\Order\Invoice;
 
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\RequestInterface;
@@ -19,28 +21,33 @@ use Magento\Framework\App\Request\InvalidRequestException;
 use Exception;
 
 /**
- * Webhook class  
+ * Webhook class
  */
 class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
 {
-    
     protected $request;
     protected $payment;
     protected $logger;
     protected $invoiceService;
-    
+    protected $transactionRepository;
+    protected $searchCriteriaBuilder;
+
     public function __construct(
-            Context $context,             
-            \Magento\Framework\App\Request\Http $request, 
-            OpenpayPayment $payment, 
+            Context $context,
+            \Magento\Framework\App\Request\Http $request,
+            OpenpayPayment $payment,
             \Psr\Log\LoggerInterface $logger_interface,
-            \Magento\Sales\Model\Service\InvoiceService $invoiceService
+            \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+            \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
+            \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
-        parent::__construct($context);        
+        parent::__construct($context);
         $this->request = $request;
         $this->payment = $payment;
-        $this->logger = $logger_interface;     
+        $this->logger = $logger_interface;
         $this->invoiceService = $invoiceService;
+        $this->transactionRepository = $transactionRepository;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
     }
 
     /**
@@ -49,79 +56,123 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
      *
      * @return \Magento\Framework\View\Result\Page
      */
-    public function execute() {        
-        $this->logger->debug('#webhook-cards');        
+    public function execute() {
+        $this->logger->debug('#webhook-cards');
         try {
-            $body = file_get_contents('php://input');        
-            $json = json_decode($body);                    
-
+            $body = file_get_contents('php://input');
+            $json = json_decode($body);
             $openpay = $this->payment->getOpenpayInstance();
 
-            if(!isset($json->type)){
+            /*JSON Body Validations*/
+            if(!isset($json->transaction)) throw new Exception("Transaction object not found in webhook request", 404);
+            if(!isset($json->type)) throw new Exception("Charge type not found in webhook request", 404);
+
+            /*Openpay Charge request*/
+            $charge = $openpay->charges->get($json->transaction->id);
+            /*Openpay Charge Validation*/
+            if(!$charge) throw new Exception("Charge not found in Openpay merchant", 404);
+
+            /*Openpay Trx Type Validation*/
+            if($json->transaction->method != 'card') throw new Exception("Transaction method is not card", 500);
+
+            /*Getting Order Data*/
+            $order = $this->_objectManager->create('Magento\Sales\Model\Order');
+            $order->loadByAttribute('ext_order_id', $charge->id);
+            $order_status = $order->getStatus();
+            $order_id = $order->getId();
+            $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+
+            /*Logging Webhook data*/
+            $this->logger->debug('#webhook.data', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
+
+            /*Magento Order validation*/
+            if($order_status == 'processing' || $order_status == 'completed'){
+                $this->logger->debug('#webhook.process.cancelled', array('Magento.order.status' => 'processing || completed'));
                 header('HTTP/1.1 200 OK');
                 exit;
             }
 
-            if(!isset($json->transaction)) throw new Exception("Transaction object is empty", -1);
-
-            if(isset($json->transaction->customer_id)){
-                $customer = $openpay->customers->get($json->transaction->customer_id);
-                $charge = $customer->charges->get($json->transaction->id);
-                if(!$charge) throw new Exception("Charge object is empty", -15);
-
-            }else{
-                $charge = $openpay->charges->get($json->transaction->id);
-                if(!$charge) throw new Exception("Charge object is empty", -15);
+            /*IF transaction is only Authorization */
+            if ($order && $charge->status == 'in_progress') {
+                $order->setState($status)->setStatus($status);
+                $order->save();
             }
 
-            $this->logger->debug('#webhook-cards', array('trx_id' => $json->transaction->id, 'status' => $charge->status));        
+            /*Update Order Status and Invoice*/
+            if($json->type == 'charge.succeeded' && $charge->status == 'completed'){
+                $this->logger->debug('#webhook.trx.succeeded.start', array('webhook.type' => 'charge.succeeded', 'openpay.charge.status' => 'completed' ));
 
-            if (isset($json->type) && $json->transaction->method == 'card') {
+                $order->setState($status)->setStatus($status);
+                $order->setTotalPaid($charge->amount);
+                $order->addStatusHistoryComment("Pago confirmado vía Webhook")->setIsCustomerNotified(true);
+                $order->save();
 
-                $order = $this->_objectManager->create('Magento\Sales\Model\Order');            
-                $order->loadByAttribute('ext_order_id', $charge->id);
-
-                $status_order = $order->getStatus();
-                $this->logger->debug('#webhook-cards-status', array('status' => $status_order));
-
-
-                if($status_order == 'processing' || $status_order == 'completed'){
-                    header('HTTP/1.1 200 OK');
-                    exit;
+                $this->searchCriteriaBuilder->addFilter('order_id', $order_id);
+                $list = $this->transactionRepository->getList(
+                    $this->searchCriteriaBuilder->create()
+                );
+                $transactions =  $list->getItems();
+                foreach ($transactions as $transaction) {
+                    $transaction->setIsClosed(true);
+                    $transaction->save();
                 }
 
-                if($json->type == 'charge.succeeded' && $charge->status == 'completed'){
-                    $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
-                    $order->setState($status)->setStatus($status);
-                    $order->setTotalPaid($charge->amount);  
-                    $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);            
-                    $order->save();
-                    
-                    $invoice = $this->invoiceService->prepareInvoice($order);        
+                $requiresInvoice = true;
+                /** @var InvoiceCollection $invoiceCollection */
+                $invoiceCollection = $order->getInvoiceCollection();
+
+                $this->logger->debug('#webhook.txn.id', array('$transactions', $transaction->getTxnId() ));
+                $this->logger->debug('#webhook.invoiceCollection', array('$invoiceCollection', $invoiceCollection->getData() ));
+
+                if ( $invoiceCollection->count() > 0 ) {
+                    /** @var Invoice $invoice */
+                    foreach ($invoiceCollection as $invoice ) {
+                        $this->logger->debug('#webhook.invoice.id', array('$invoice.id', $invoice->getId(), '$invoice.incrementId' => $invoice->getIncrementId() ));
+                        $this->logger->debug('#webhook.invoice.state', array('$invoice', $invoice->getState() ));
+                        if ( $invoice->getState() == Invoice::STATE_OPEN) {
+                            $invoice->setState(Invoice::STATE_PAID);
+                            $invoice->setTransactionId($charge->id);
+                            $invoice->pay()->save();
+                            $requiresInvoice = false;
+                            break;
+                        }
+                        if ($invoice->getState() == Invoice::STATE_PAID) {
+                            $requiresInvoice = false;
+                        }
+                    }
+                }
+
+                if ( $requiresInvoice ) {
+                    $invoice = $this->invoiceService->prepareInvoice($order);
+                    $this->logger->debug('#webhook.requireInvoice', array('$invoice.id', $invoice->getId(), '$invoice.incrementId' => $invoice->getIncrementId() ));
                     $invoice->setTransactionId($charge->id);
-                    $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-                    $invoice->register();
-                    $invoice->save();
-                }else if($json->type == 'transaction.expired' && $charge->status == 'expired'){
-                    $status = \Magento\Sales\Model\Order::STATE_CANCELED;
-                    $order->setState($status)->setStatus($status);
-                    $order->addStatusHistoryComment("Pago vencido")->setIsCustomerNotified(true);            
-                    $order->save();
+                    $invoice->pay()->save();
                 }
+                $payment = $order->getPayment();
+                $payment->setAmountPaid($charge->amount);
+                $payment->setIsTransactionPending(false);
+                $payment->save();
 
-                header('HTTP/1.1 200 OK');
+                $this->logger->debug('#webhook.trx.succeeded.end', array('Magento.order.invoice' => 'saved' ) );
+            }else{
+                $this->logger->debug('#webhook.trx.expired.start', array('webhook.type' => 'transaction.expired', 'openpay.charge.status' => 'expired' ));
+                $order->cancel();
+                $order->addStatusHistoryComment("La transacción no pudo ser procesada")->setIsCustomerNotified(true);
+                $statusCanceled = $this->payment->getCustomStatus('canceled');
+                $order->setStatus($statusCanceled);
+                $order->save();
+                $this->logger->debug('#webhook.trx.expired.end', array('Magento.order.invoice' => 'saved' ) );
+            }
 
-            } else if ($json->transaction->method != 'card') throw new Exception("Transaction method is not card", -30);
+            header('HTTP/1.1 200 OK');
 
         } catch (\Exception $e) {
-
-            $this->logger->error('#webhook-cards', array('msg' => $e->getMessage(), 'code' => $e->getCode()));                    
+            $this->logger->error('#webhook-cards-Exception', array('msg' => $e->getMessage(), 'code' => $e->getCode()));
             header("HTTP/1.0 500 Server Error");
-
         }
         exit;
-    }       
-    
+    }
+
     /**
      * Create exception in case CSRF validation failed.
      * Return null if default exception will suffice.
