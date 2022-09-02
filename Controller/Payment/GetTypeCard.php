@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * @category    Payments
  * @package     Openpay_Cards
  * @author      Federico Balderas
@@ -16,12 +16,12 @@ use Magento\Framework\Controller\ResultFactory;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
 
 class GetTypeCard extends \Magento\Framework\App\Action\Action{
-    
+
     protected $payment;
     protected $logger;
     protected $openpayRequest;
     /**
-     * 
+     *
      * @param Context $context
      * @param OpenpayPayment $payment
      * @param \Psr\Log\LoggerInterface $logger_interface
@@ -45,7 +45,7 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
 
         try {
             $this->logger->debug('#CardBin', array('cardInfo' => $post['card_bin']));
-            
+
             $country = $this->payment->getCountry();
             $openpay = $this->payment->getOpenpayInstance();
             $sk = $this->payment->getPrivateKey();
@@ -69,16 +69,13 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
             }
             if($country == 'PE') {
                 $path = sprintf('/%s/bines/%s/promotions', $this->payment->getMerchantId(), $post['card_bin']);
-                $dataRequest = array(
-                    'amount' => $post['amount'],
-                    'currency' => 'PEN'
-                );
-                $cardInfo = $this->openpayRequest->make($path, $country, $this->payment->isSandbox(), "POST", $dataRequest);
+                $cardInfo = $this->openpayRequest->make($path, $country, $this->payment->isSandbox());
                 $installments = (count($cardInfo->installments) == 0) ? [] : $cardInfo->installments;
                 $data = array(
                     'status' => 'success',
                     'card_type' => $cardInfo->cardType,
-                    'installments' => $installments
+                    'installments'  => $installments,
+                    'withInterest' => $cardInfo->withInterest
                 );
             }
         } catch (\Exception $e) {
@@ -86,7 +83,7 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
             $data = array(
                 'status' => 'error',
                 'card_type' => "credit card not found"
-            );                   
+            );
         }
 
         $resultJson = $this->resultFactory->create(ResultFactory::TYPE_JSON);

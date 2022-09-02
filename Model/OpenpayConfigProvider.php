@@ -13,17 +13,22 @@ use Magento\Checkout\Model\Cart;
 class OpenpayConfigProvider implements ConfigProviderInterface
 {
     /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var string[]
      */
     protected $methodCodes = [
-        'openpay_cards',        
+        'openpay_cards',
     ];
 
     /**
      * @var \Magento\Payment\Model\Method\AbstractMethod[]
      */
     protected $methods = [];
-    
+
     /**
      * @var \Openpay\Cards\Model\Payment
      */
@@ -32,14 +37,20 @@ class OpenpayConfigProvider implements ConfigProviderInterface
     protected $cart;
 
 
-    /**     
+    /**
+     * @param \Psr\Log\LoggerInterface $logger
      * @param PaymentHelper $paymentHelper
      * @param OpenpayPayment $payment
      */
-    public function __construct(PaymentHelper $paymentHelper, OpenpayPayment $payment, Cart $cart) {        
+    public function __construct(
+        \Psr\Log\LoggerInterface $logger,
+        PaymentHelper $paymentHelper,
+        OpenpayPayment $payment,
+        Cart $cart) {
         foreach ($this->methodCodes as $code) {
             $this->methods[$code] = $paymentHelper->getMethodInstance($code);
         }
+        $this->logger = $logger;
         $this->cart = $cart;
         $this->payment = $payment;
     }
@@ -48,13 +59,13 @@ class OpenpayConfigProvider implements ConfigProviderInterface
      * {@inheritdoc}
      */
     public function getConfig()
-    {                
+    {
         $config = [];
         foreach ($this->methodCodes as $code) {
             if ($this->methods[$code]->isAvailable()) {
                 $protocol = $this->hostSecure() === true ? 'https://' : 'http://';
-                
-                $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSandbox());                 
+
+                $config['payment']['openpay_credentials'] = array("merchant_id" => $this->payment->getMerchantId(), "public_key" => $this->payment->getPublicKey(), "is_sandbox"  => $this->payment->isSandbox());
                 $config['payment']['months_interest_free'] = $this->payment->getMonthsInterestFree();
                 $config['payment']['installments'] = $this->payment->getInstallments();
                 $config['payment']['use_card_points'] = $this->payment->useCardPoints();
@@ -66,8 +77,13 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 $config['payment']['url_store'] = $this->payment->getBaseUrlStore();
                 $config['payment']['country'] = $this->payment->getCountry();
                 $config['payment']['isAvailableInstallments'] = $this->payment->getIsAvailableInstallments();
-                                
-                $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard", "CN" => "Carnet"); 
+                $config['payment']['ccform']["availableTypes"][$code] = array("AE" => "American Express", "VI" => "Visa", "MC" => "MasterCard", "CN" => "Carnet");
+
+                $this->logger->info("this->payment->getCountry() - " . $this->payment->getCountry(),['Method' => 'getConfig() | OpenpayConfigProvider']);
+                if($this->payment->getCountry() === "PE"){
+                    $config['payment']['ccform']["availableTypes"][$code]["DN"] = "Diners";
+                }
+
                 $config['payment']['ccform']["hasVerification"][$code] = true;
                 $config['payment']['ccform']["hasSsCardType"][$code] = false;
                 $config['payment']['ccform']["months"][$code] = $this->getMonths();
@@ -76,10 +92,10 @@ class OpenpayConfigProvider implements ConfigProviderInterface
                 $config['payment']['ccform']["ssStartYears"][$code] = $this->getStartYears();
             }
         }
-                
+
         return $config;
     }
-    
+
     public function getMonths(){
         return array(
             "1" => "01 - Enero",
@@ -96,7 +112,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
             "12"=> "12 - Diciembre"
         );
     }
-    
+
     public function getYears(){
         $years = array();
         for($i=0; $i<=10; $i++){
@@ -105,7 +121,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         }
         return $years;
     }
-    
+
     public function getStartYears(){
         $years = array();
         for($i=5; $i>=0; $i--){
@@ -114,7 +130,7 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         }
         return $years;
     }
-    
+
     public function hostSecure() {
         $is_secure = false;
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
@@ -122,8 +138,8 @@ class OpenpayConfigProvider implements ConfigProviderInterface
         } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
             $is_secure = true;
         }
-        
+
         return $is_secure;
     }
-    
+
 }

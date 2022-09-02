@@ -19,12 +19,12 @@ define(
     ],
     function (Component, $, quote, customer) {
         'use strict';
-        
+
         window.handleInstallmentsPE = function (installmentsToAdd) {
             let installmentsOptions = $('#installments option');
             let installementsSelect = $('#installments');
-            installmentsOptions.each(function () { 
-                $(this).remove();   
+            installmentsOptions.each(function () {
+                $(this).remove();
             });
 
             installmentsToAdd.forEach(function (element){
@@ -35,37 +35,44 @@ define(
             });
         }
 
-        window.handleShowOrHideInstallments = function (data, country, months) { 
+        window.handleShowOrHideInstallments = function (data, country, months) {
             if (data.card_type.toUpperCase() === 'CREDIT') {
                 if (country == 'MX' && months.length > 1) $("#openpay_cards_interest_free").show();
                 if (country == 'CO') $("#openpay_installments").show();
                 if (country == 'PE') {
                     data.installments = data.installments.map(Number);
-                    console.log(data.installments);
                     if(data.installments.indexOf(1) < 0) data.installments.push(1);
                     data.installments.sort( function (a,b) { return a - b });
                     window.handleInstallmentsPE(data.installments);
-                    if(data.installments.length > 1) {    
+                    if(data.installments.length > 1) {
+                        $("#openpay_installments_title").text("Cuotas con Interés");
+                        if (data.withInterest || data.withInterest === null ){
+                            $("#openpay_installments_title").text("Cuotas con Interés");
+                            $("#withInterest").val(true);
+                        }else{
+                            $("#openpay_installments_title").text("Cuotas sin Interés");
+                            $("#withInterest").val(false);
+                        }
                         $("#openpay_installments").show();
                     } else {
                         $("#openpay_installments").hide();
                         $('#openpay_installments option[value="1"]').attr("selected",true);
                     }
-                } 
+                }
             } else {
                 if (country == 'MX') {
                     $("#openpay_cards_interest_free").hide();
                     $('#openpay_cards_interest_free option[value="1"]').attr("selected",true);
                     $("#total-monthly-payment").hide();
-                } else { 
+                } else {
                     $("#openpay_installments").hide();
                     $('#openpay_installments option[value="1"]').attr("selected",true);
                 }
             }
         }
 
-        var customerData = null; 
-        var total = window.checkoutConfig.payment.total;       
+        var customerData = null;
+        var total = window.checkoutConfig.payment.total;
         var card_old = null;
         $(document).on("keypress focusout", "#openpay_cards_cc_number", function() {
             var card = $(this).val();
@@ -73,13 +80,15 @@ define(
             var months = window.checkoutConfig.payment.months_interest_free;
             var country = window.checkoutConfig.payment.country;
             let isAvailableInstallmentsPE = window.checkoutConfig.payment.isAvailableInstallments;
-            let lng = country == 'PE' ? 6 : 8; 
-            var bin = null;                   
+            let lng = country == 'PE' ? 6 : 8;
+            var bin = null;
+
             if (card.length >= lng) {
                 if (country == 'MX' && months.length < 3) {
                     return;
                 }
-                if (country == 'PE' && !isAvailableInstallmentsPE ){
+                if (country == 'PE' && isAvailableInstallmentsPE == "0" ){
+                    console.log("Return without request bin PE");
                     return;
                 }
                 var bin = card.substring(0, lng);
@@ -118,9 +127,9 @@ define(
             }
         });
 
-        $(document).on("change", "#interest_free", function() {        
+        $(document).on("change", "#interest_free", function() {
             var monthly_payment = 0;
-            var months = parseInt($(this).val());     
+            var months = parseInt($(this).val());
 
             if (months > 1) {
                 $("#total-monthly-payment").css("display", "inline");
@@ -129,13 +138,13 @@ define(
             }
 
             monthly_payment = total/months;
-            monthly_payment = monthly_payment.toFixed(2);            
-            
+            monthly_payment = monthly_payment.toFixed(2);
+
             $("#monthly-payment").text(monthly_payment);
-        });            
-        
+        });
+
         //$("body").append('<div class="modal fade" role="dialog" id="card-points-dialog"> <div class="modal-dialog modal-sm"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title">Pagar con Puntos</h4> </div> <div class="modal-body"> <p>¿Desea usar los puntos de su tarjeta para realizar este pago?</p> </div> <div class="modal-footer"> <button type="button" class="btn btn-success" data-dismiss="modal" id="points-yes-button">Si</button> <button type="button" class="btn btn-default" data-dismiss="modal" id="points-no-button">No</button> </div> </div> </div></div>');
-        
+
         return Component.extend({
             defaults: {
                 template: 'Openpay_Cards/payment/openpay-form'
@@ -148,34 +157,34 @@ define(
             isActive: function() {
                 return true;
             },
-            
+
             getMonthsInterestFree: function() {
-                return window.checkoutConfig.payment.months_interest_free;                
+                return window.checkoutConfig.payment.months_interest_free;
             },
-            
+
             getInstallments: function() {
-                return window.checkoutConfig.payment.installments;                
+                return window.checkoutConfig.payment.installments;
             },
-            
+
             creditCardOption: function() {
                 customerData = quote.billingAddress._latestValue;
                 console.log('#openpay_cc', $('#openpay_cc').val());
                 let ccOptionArray = $( "#openpay_cc option:selected" ).text().split(' ');
                 let card = ccOptionArray[ccOptionArray.length - 1];
-                
-                if ($('#openpay_cc').val() !== "new") {                                 
-                    $('#save_cc').prop('checked', false);                
-                    $('#save_cc').prop('disabled', true);                 
+
+                if ($('#openpay_cc').val() !== "new") {
+                    $('#save_cc').prop('checked', false);
+                    $('#save_cc').prop('disabled', true);
                     var binValidate = Number(card.substring(0,6));
                     $('#openpay_cards_cc_number').val(binValidate).trigger('keypress');
-                    $('#openpay_cards_cc_number').val(binValidate).change();                                 
+                    $('#openpay_cards_cc_number').val(binValidate).change();
                     $("#openpay_cards_expiration").val("").change();
                     $("#openpay_cards_expiration_yr").val("").change();
-                    $('#openpay_cards_cc_cid').val("");                                                         
-                    
-                    $('#save_cc_fieldset').hide();                    
+                    $('#openpay_cards_cc_cid').val("");
+
+                    $('#save_cc_fieldset').hide();
                     $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
-                    
+
                 } else {
                     $('#openpay_cards_cc_number').val('').change();
                     $('#payment_form_openpay_cards > div').show();
@@ -183,63 +192,63 @@ define(
                     $('#save_cc').prop('disabled', false);
                 }
             },
-            
+
             showMonthsInterestFree: function() {
-                var months = window.checkoutConfig.payment.months_interest_free;                         
-                var total = window.checkoutConfig.payment.total;                
+                var months = window.checkoutConfig.payment.months_interest_free;
+                var total = window.checkoutConfig.payment.total;
                 total = parseInt(total);
-                                
-                return months.length > 1 ? true : false;                
+
+                return months.length > 1 ? true : false;
             },
-            
+
             showInstallments: function() {
-                var installments = window.checkoutConfig.payment.installments;                                                         
-                return installments.length > 1 ? true : false;                
-            },            
+                var installments = window.checkoutConfig.payment.installments;
+                return installments.length > 1 ? true : false;
+            },
             canSaveCC: function() {
-                return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;                
+                return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;
             },
             existsOneCreditCard: function() {
                 return window.checkoutConfig.payment.exists_one_credit_card;
             },
-            
+
             isLoggedIn: function() {
                 console.log('isLoggedIn()', window.checkoutConfig.payment.is_logged_in);
                 return window.checkoutConfig.payment.is_logged_in;
-            },            
-            
+            },
+
             getCreditCardList: function() {
                 console.log('getCreditCardList()', window.checkoutConfig.payment.cc_list);
                 return window.checkoutConfig.payment.cc_list;
-            },            
-            
+            },
+
             /**
              * Prepare and process payment information
              */
             preparePayment: function () {
                 var self = this;
                 var $form = $('#' + this.getCode() + '-form');
-                
+
                 var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox === "0" ? false : true;
                 var useCardPoints = window.checkoutConfig.payment.use_card_points === "0" ? false : true;
                 OpenPay.setId(window.checkoutConfig.payment.openpay_credentials.merchant_id);
                 OpenPay.setApiKey(window.checkoutConfig.payment.openpay_credentials.public_key);
-                OpenPay.setSandboxMode(isSandbox);                    
+                OpenPay.setSandboxMode(isSandbox);
 
                 //antifraudes
                 OpenPay.deviceData.setup(this.getCode() + '-form', "device_session_id");
-                
+
                 console.log('#openpay_cc', $('#openpay_cc').val());
-                
+
                 if ($('#openpay_cc').val() !== 'new') {
                     console.log('Pagar con token', $('#openpay_cc').val());
-                    this.messageContainer.clear();                                        
+                    this.messageContainer.clear();
                     self.placeOrder();
                     return;
                 }
 
                 if ($form.validation() && $form.validation('isValid')) {
-                    this.messageContainer.clear();                                        
+                    this.messageContainer.clear();
 
                     var year_full = $('#openpay_cards_expiration_yr').val();
                     var holder_name = this.getCustomerFullName();
@@ -262,22 +271,22 @@ define(
 
                     OpenPay.token.create(data, function(response) {
                             var token_id = response.data.id;
-                            $("#openpay_token").val(token_id);                            
-                            
-                            if (!response.data.card.points_card || !useCardPoints) {                                
+                            $("#openpay_token").val(token_id);
+
+                            if (!response.data.card.points_card || !useCardPoints) {
                                 console.log('NO useCardPoints');
                                 self.placeOrder();
                                 return;
-                            } 
-                            
+                            }
+
                             var r = confirm("¿Desea usar los puntos de su tarjeta para realizar este pago?");
                             if (r === true) {
-                                $('#use_card_points').val('true');                                                        
+                                $('#use_card_points').val('true');
                             } else {
-                                $('#use_card_points').val('false');                        
-                            } 
+                                $('#use_card_points').val('false');
+                            }
                             self.placeOrder();
-                            //$("#card-points-dialog").modal("show");                            
+                            //$("#card-points-dialog").modal("show");
                         },
                         function(response) {
                             console.log("token error");
@@ -293,7 +302,7 @@ define(
             /**
              * @override
              */
-            getData: function () {                
+            getData: function () {
                 return {
                     'method': "openpay_cards",
                     'additional_data': {
@@ -305,7 +314,8 @@ define(
                         'interest_free': $('#interest_free').val(),
                         'use_card_points': $('#use_card_points').val(),
                         'save_cc': $("#save_cc").is(':checked') ? '1' : '0',
-                        'openpay_cc': $('#openpay_cc').val()
+                        'openpay_cc': $('#openpay_cc').val(),
+                        'with_interest':$("#withInterest").val()
                     }
                 };
             },
@@ -321,15 +331,15 @@ define(
                 } else {
                     $('.field.number').addClass("required");
                     $("#openpay_cards_cc_type_exp_div").addClass("required");
-                }        
+                }
                 return $form.validation() && $form.validation('isValid');
             },
-            getCustomerFullName: function() {             
-                customerData = quote.billingAddress._latestValue;  
-                return customerData.firstname+' '+customerData.lastname;                
+            getCustomerFullName: function() {
+                customerData = quote.billingAddress._latestValue;
+                return customerData.firstname+' '+customerData.lastname;
             },
             validateAddress: function() {
-                customerData = quote.billingAddress._latestValue;  
+                customerData = quote.billingAddress._latestValue;
                 if(typeof customerData.city === 'undefined' || customerData.city.length === 0) {
                   return false;
                 }
@@ -344,12 +354,12 @@ define(
 
                 if(typeof customerData.street === 'undefined' || customerData.street[0].length === 0) {
                   return false;
-                }                
+                }
 
                 if(typeof customerData.region === 'undefined' || customerData.region.length === 0) {
                   return false;
                 }
-                
+
                 var address = {
                     city: customerData.city,
                     country_code: customerData.countryId,

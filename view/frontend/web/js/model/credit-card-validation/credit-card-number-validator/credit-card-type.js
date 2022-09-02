@@ -3,7 +3,7 @@ define([
     'mageUtils'
 ], function ($, utils) {
     'use strict';
-    
+
     var types = [
         {
             title: 'Visa',
