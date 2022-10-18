@@ -316,22 +316,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance->setAdditionalInformation('installments',
             isset($additionalData['installments']) ? $additionalData['installments'] : null
         );
-        //*Validar vinen del formulario
-        // if ($this->country==="MX") {
-        //     $infoInstance->setAdditionalInformation('save_cc',
-        //         isset($additionalData['save_cc_mx']) ? $additionalData['save_cc_mx'] : null
-        //     );
-        // }
-        // if ($this->country==="CO") {
-        //     $infoInstance->setAdditionalInformation('save_cc',
-        //         isset($additionalData['save_cc_co']) ? $additionalData['save_cc_co'] : null
-        //     );
-        // }
-        // if ($this->country==="PE") {
-        //     $infoInstance->setAdditionalInformation('save_cc',
-        //         isset($additionalData['save_cc_pe']) ? $additionalData['save_cc_pe'] : null
-        //     );
-        // }
+        
         $infoInstance->setAdditionalInformation('save_cc',
             isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
         );
