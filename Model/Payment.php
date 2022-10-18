@@ -187,7 +187,20 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->isAvailableInstallments = $this->country === 'PE' ?  $this->getConfigData('installments') : false;
         $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
         $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
-        $this->save_cc = $this->getConfigData('save_cc');
+
+        // Se valida por pais para COF
+        if ($this->country === "MX") {
+            $this->save_cc = $this->getConfigData('save_cc_mx');
+        }
+
+        if ($this->country === "CO") {
+            $this->save_cc = $this->getConfigData('save_cc_co');
+        }
+
+        if ($this->country === "PE") {
+            $this->save_cc = $this->getConfigData('save_cc_pe');
+        }
+
         $this->minimum_amounts = $this->getConfigData('minimum_amounts');
         $this->config_months = $this->minimum_amounts ? array(
                                         "3" => $this->getConfigData('three_months'),
@@ -303,6 +316,22 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance->setAdditionalInformation('installments',
             isset($additionalData['installments']) ? $additionalData['installments'] : null
         );
+        //*Validar vinen del formulario
+        // if ($this->country==="MX") {
+        //     $infoInstance->setAdditionalInformation('save_cc',
+        //         isset($additionalData['save_cc_mx']) ? $additionalData['save_cc_mx'] : null
+        //     );
+        // }
+        // if ($this->country==="CO") {
+        //     $infoInstance->setAdditionalInformation('save_cc',
+        //         isset($additionalData['save_cc_co']) ? $additionalData['save_cc_co'] : null
+        //     );
+        // }
+        // if ($this->country==="PE") {
+        //     $infoInstance->setAdditionalInformation('save_cc',
+        //         isset($additionalData['save_cc_pe']) ? $additionalData['save_cc_pe'] : null
+        //     );
+        // }
         $infoInstance->setAdditionalInformation('save_cc',
             isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
         );
@@ -452,6 +481,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $token = $this->getInfoInstance()->getAdditionalInformation('openpay_token');
         $device_session_id = $this->getInfoInstance()->getAdditionalInformation('device_session_id');
         $use_card_points = $this->getInfoInstance()->getAdditionalInformation('use_card_points');
+        // Valida si esta chekeado guardar tarjeta
         $save_cc = $this->getInfoInstance()->getAdditionalInformation('save_cc');
         $openpay_cc = $this->getInfoInstance()->getAdditionalInformation('openpay_cc');
         $cvv2 = $this->getInfoInstance()->getAdditionalInformation('cc_cid');
@@ -559,10 +589,28 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
             $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
 
-            // Validate New Card
+            // Valida una nueva tarjeta para guardar sin cvv -- $save_cc es del checkbox 'guardar tarjeta'
             if ($save_cc == '1' && $openpay_cc == 'new') {
                 $charge_request['source_id'] = $this->validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number);
-            } else if ($save_cc == '0' && $openpay_cc != 'new') {
+                $this->logger->debug("SAVE_CC GUARDAR ". $save_cc);
+                $_SESSION['card_new'] = '1';
+            // valida una tarjeta guardada para actualizarla
+            }else if ($this->save_cc == '1' && $openpay_cc != 'new') {
+                $this->logger->debug('SAVE_CC UPDATE ');
+                $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
+                $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
+                        'cvv2' => $cvv2
+                    ],
+                    [
+                        'sk' => $this->sk
+                    ]);
+                if($dataCVV->http_code != 200) {
+                    throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
+                }
+                $charge_request['source_id'] = $openpay_cc;
+            // valida en no guardar tarjeta
+            }else if ($save_cc == '0' && $openpay_cc != 'new') {
+                $this->logger->debug("SAVE_CC NO GUARDAR ". $save_cc);
                 // Update cvv to id card
                 $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
                 $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
@@ -684,25 +732,35 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $has_openpay_account = $this->hasOpenpayAccount($customerId);
         $cards = $this->getCreditCards($openpay_customer, $has_openpay_account->created_at);
 
-        $card_number_bin = substr($card_number, 0, 8);
+        $card_number_bin = substr($card_number, 0, 6);
         $card_number_complement = substr($card_number, -4);
         foreach ($cards as $card) {
-            if($card_number_bin == substr($card->card_number, 0, 8) && $card_number_complement == substr($card->card_number, -4)) {
+            $this->logger->debug('validateNewCard', array('card => ' => $card->card_number));
+            if($card_number_bin == substr($card->card_number, 0, 6) && $card_number_complement == substr($card->card_number, -4)) {
                 $errorMsg = "La tarjeta ya se encuentra registrada, seleccionala de la lista de tarjetas.";
                 $this->logger->error('validateNewCard', array('#ERROR validateNewCard() => ' => $errorMsg));
                 throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));
+                //*Validar mensaje
             }
         }
 
         $card_data = array(
-        'token_id' => $token,
-        'device_session_id' => $device_session_id
+            'token_id' => $token,
+            'device_session_id' => $device_session_id
         );
+
+        if ($this->save_cc === "2" && $this->country === "PE") {
+            $this->logger->debug('GUARDA CON CVV => ', array('save_cc => ' => $this->save_cc, 'country => ' => $this->country));
+            $card_data['register_frequent'] = true;
+            $_SESSION['card_new'] = '2';
+        }
+        $this->logger->debug('CARD DATA => ', $card_data);
 
         $card = $this->createCreditCard($openpay_customer, $card_data);
 
         return $card->id;
     }
+
 
     private function makeOpenpayCharge($customer_data, $charge_request) {
         $openpay = $this->getOpenpayInstance();
@@ -822,6 +880,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     private function getCreditCards($customer, $customer_created_at) {
         $from_date = date('Y-m-d', strtotime($customer_created_at."- 1 day"));
         $to_date = date('Y-m-d');
+        
         try {
             return $customer->cards->getList(array(
                 'creation[gte]' => $from_date,
@@ -829,6 +888,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 'offset' => 0,
                 'limit' => 10
             ));
+            $this->logger->debug('CREDIT CARDS', $customer->cards());
+
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -860,6 +921,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 array_push($list, array('value' => $card->id, 'name' => strtoupper($card->brand).' '.$card->card_number));
             }
 
+            //$this->logger->debug('LIST CARD ', $list);
             return $list;
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
@@ -867,6 +929,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
 
     public function existsOneCreditCard() {
+        //return 3;
         return count($this->getCreditCardList()) > 1;
     }
 
@@ -1137,5 +1200,3 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 return ($this->canceled_openpay != \Magento\Sales\Model\Order::STATE_CANCELED ) ? $this->canceled_openpay : \Magento\Sales\Model\Order::STATE_CANCELED;
         }
     }
-
-}

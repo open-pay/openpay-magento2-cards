@@ -23,8 +23,8 @@ define(
         window.handleInstallmentsPE = function (installmentsToAdd) {
             let installmentsOptions = $('#installments option');
             let installementsSelect = $('#installments');
-            installmentsOptions.each(function () {
-                $(this).remove();
+            installmentsOptions.each(function () { 
+                $(this).remove();   
             });
 
             installmentsToAdd.forEach(function (element){
@@ -41,6 +41,7 @@ define(
                 if (country == 'CO') $("#openpay_installments").show();
                 if (country == 'PE') {
                     data.installments = data.installments.map(Number);
+                    console.log(data.installments);
                     if(data.installments.indexOf(1) < 0) data.installments.push(1);
                     data.installments.sort( function (a,b) { return a - b });
                     window.handleInstallmentsPE(data.installments);
@@ -172,7 +173,7 @@ define(
                 let ccOptionArray = $( "#openpay_cc option:selected" ).text().split(' ');
                 let card = ccOptionArray[ccOptionArray.length - 1];
 
-                if ($('#openpay_cc').val() !== "new") {
+                if ($('#openpay_cc').val() !== "new" && window.checkoutConfig.payment.can_save_cc === '2') {
                     $('#save_cc').prop('checked', false);
                     $('#save_cc').prop('disabled', true);
                     var binValidate = Number(card.substring(0,6));
@@ -183,9 +184,30 @@ define(
                     $('#openpay_cards_cc_cid').val("");
 
                     $('#save_cc_fieldset').hide();
-                    $('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div")).hide();
+                    //$('#payment_form_openpay_cards > div').not($("#openpay_cards_cc_type_cvv_div"), $("#seleccionar_tarjeta"), $("#tarjetas_aceptadas")).hide();
+                    $("#numero_de_tarjeta").hide();
+                    $("#openpay_cards_cc_type_exp_div").hide();
+                    $("#openpay_cards_cc_type_cvv_div").hide();
 
-                } else {
+                } else if ($('#openpay_cc').val() !== "new" && window.checkoutConfig.payment.can_save_cc === '1'){
+                    $('#save_cc').prop('checked', false);                
+                    $('#save_cc').prop('disabled', true);                 
+                    var binValidate = Number(card.substring(0,6));
+                    $('#openpay_cards_cc_number').val(binValidate).trigger('keypress');
+                    $('#openpay_cards_cc_number').val(binValidate).change();                                 
+                    $("#openpay_cards_expiration").val("").change();
+                    $("#openpay_cards_expiration_yr").val("").change();
+                    $('#openpay_cards_cc_cid').val("");
+
+                    $('#save_cc_fieldset').hide();
+                    $("#numero_de_tarjeta").hide();
+                    $("#openpay_cards_cc_type_exp_div").hide();
+
+                } else if (window.checkoutConfig.payment.can_save_cc === '0'){
+                    $('#save_cc_fieldset').hide();
+                    $("#seleccionar_tarjeta").hide();
+                    
+                }else {
                     $('#openpay_cards_cc_number').val('').change();
                     $('#payment_form_openpay_cards > div').show();
                     $('#save_cc_fieldset').show();
@@ -206,7 +228,16 @@ define(
                 return installments.length > 1 ? true : false;
             },
             canSaveCC: function() {
-                return window.checkoutConfig.payment.can_save_cc === '1' ? true : false;
+                if ( window.checkoutConfig.payment.can_save_cc === '1') {
+                    console.log("save_cc option", window.checkoutConfig.payment.can_save_cc)
+                    return true
+                } else if (window.checkoutConfig.payment.can_save_cc === '2') {
+                    console.log("save_cc option", window.checkoutConfig.payment.can_save_cc)
+                    return true
+                } else {
+                    console.log("save_cc option", window.checkoutConfig.payment.can_save_cc)
+                    return false;
+                }
             },
             existsOneCreditCard: function() {
                 return window.checkoutConfig.payment.exists_one_credit_card;
@@ -217,6 +248,10 @@ define(
                 return window.checkoutConfig.payment.is_logged_in;
             },
 
+            notLogged: function(){
+                return !window.checkoutConfig.payment.is_logged_in;
+            },
+            
             getCreditCardList: function() {
                 console.log('getCreditCardList()', window.checkoutConfig.payment.cc_list);
                 return window.checkoutConfig.payment.cc_list;
@@ -225,7 +260,7 @@ define(
             /**
              * Prepare and process payment information
              */
-            preparePayment: function () {
+            preparePayment: function (e) {
                 var self = this;
                 var $form = $('#' + this.getCode() + '-form');
 
@@ -245,6 +280,15 @@ define(
                     this.messageContainer.clear();
                     self.placeOrder();
                     return;
+                }
+
+                if ($("#nombre_titular").val().length < 1 ) {
+                    console.log("HOLAS")
+                    $("#openpay_cards_cc_holder_name-error").css('display', 'block');
+                    $("#nombre_titular").focus();
+                    e.preventDefault();
+                } else {
+                    $("#openpay_cards_cc_holder_name-error").css('display', 'none');
                 }
 
                 if ($form.validation() && $form.validation('isValid')) {
