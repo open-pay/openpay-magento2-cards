@@ -1185,3 +1185,4 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 return ($this->canceled_openpay != \Magento\Sales\Model\Order::STATE_CANCELED ) ? $this->canceled_openpay : \Magento\Sales\Model\Order::STATE_CANCELED;
         }
     }
+}
