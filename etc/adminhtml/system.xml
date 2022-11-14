@@ -112,11 +112,33 @@
                     </depends>
                     <comment>Recibe pagos con puntos Bancomer habilitando esta opción. Esta opción no se puede combinar con pre-autorizaciones o MSI.</comment>
                 </field>
-                <field id="save_cc" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="save_cc_mx" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Guardar tarjetas</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <source_model>Openpay\Cards\Model\Source\SaveCc::getSaveCcMxCo</source_model>
+                    <depends>
+                        <field id="country">MX</field>
+                    </depends>
                     <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
                 </field>
+                <field id="save_cc_co" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Guardar tarjetas</label>
+                    <source_model>Openpay\Cards\Model\Source\SaveCc::getSaveCcMxCo</source_model>
+                    <depends>
+                        <field id="country">CO</field>
+                    </depends>
+                    <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
+                </field>
+                <field id="save_cc_pe" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Guardar tarjetas</label>
+                    <tooltip>La opción "Guardar y no solicitar CVV" requiere una configuración adicional de Openpay,
+                            contacte a nuestro equipo de soporte para activarlo </tooltip>
+                    <source_model>Openpay\Cards\Model\Source\SaveCc::getSaveCc</source_model>
+                    <depends>
+                        <field id="country">PE</field>
+                    </depends>
+                    <comment>Permite a los usuarios guardar sus tarjetas de crédito para agilizar sus futuras compras.</comment>
+                </field>
+
                 <field id="cctypes_mx" translate="label" type="multiselect" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tipos de Tarjetas</label>
                     <source_model>Openpay\Cards\Model\Source\Cctype::getAllowedTypesMx</source_model>
