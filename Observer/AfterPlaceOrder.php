@@ -41,6 +41,7 @@ class AfterPlaceOrder implements ObserverInterface {
     public function execute(Observer $observer) {
         $orderId = $observer->getEvent()->getOrderIds();
         $order = $this->order->load($orderId[0]);
+        $status = $this->config->getCustomStatus('processing');
 
         $this->logger->debug('#AfterPlaceOrder openpay_cards');
 
@@ -50,7 +51,7 @@ class AfterPlaceOrder implements ObserverInterface {
             $this->logger->debug('#AfterPlaceOrder openpay_cards', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));
 
             if($charge->status == 'completed') {
-                $order->setStatus($this->config->getCustomStatus('processing'));
+                $order->setStatus($status);
                 $order->save();
             }        
             if ($charge->status == 'charge_pending' && isset($_SESSION['openpay_3d_secure_url'])) {
@@ -59,6 +60,11 @@ class AfterPlaceOrder implements ObserverInterface {
                 $order->save();
                 $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
                 $this->_redirect->redirect($this->_response, $_SESSION['openpay_3d_secure_url']);
+            }
+            if ($charge->status == 'in_progress' && ($charge->id != $charge->authorization)) {
+                $order->setState($status)->setStatus('processing');
+                $order->addStatusHistoryComment("Preautorización realizada exitosamente");
+                $order->save();
             }
         } elseif ($order->getPayment()->getMethod() == 'openpay_banks') {
             $this->logger->debug('#AfterPlaceOrder openpay_banks', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'ext_order_id' => $order->getExtOrderId()));
