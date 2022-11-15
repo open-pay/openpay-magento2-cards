@@ -710,12 +710,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $card_number_bin = substr($card_number, 0, 6);
         $card_number_complement = substr($card_number, -4);
         foreach ($cards as $card) {
-
             if($card_number_bin == substr($card->card_number, 0, 6) && $card_number_complement == substr($card->card_number, -4)) {
                 $errorMsg = "La tarjeta ya se encuentra registrada, seleccionala de la lista de tarjetas.";
                 $this->logger->error('validateNewCard', array('#ERROR validateNewCard() => ' => $errorMsg));
                 throw new \Magento\Framework\Exception\LocalizedException(__($errorMsg));
-                //*Validar mensaje
             }
         }
 
@@ -855,6 +853,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     private function getCreditCards($customer, $customer_created_at) {
         $from_date = date('Y-m-d', strtotime($customer_created_at."- 1 day"));
         $to_date = date('Y-m-d');
+
         try {
             return $customer->cards->getList(array(
                 'creation[gte]' => $from_date,
@@ -862,6 +861,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 'offset' => 0,
                 'limit' => 10
             ));
+
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -893,7 +893,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 array_push($list, array('value' => $card->id, 'name' => strtoupper($card->brand).' '.$card->card_number));
             }
 
-            //$this->logger->debug('LIST CARD ', $list);
             return $list;
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
@@ -901,7 +900,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     }
 
     public function existsOneCreditCard() {
-        //return 3;
         return count($this->getCreditCardList()) > 1;
     }
 
@@ -1172,4 +1170,5 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 return ($this->canceled_openpay != \Magento\Sales\Model\Order::STATE_CANCELED ) ? $this->canceled_openpay : \Magento\Sales\Model\Order::STATE_CANCELED;
         }
     }
+
 }
