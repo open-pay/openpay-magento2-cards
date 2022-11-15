@@ -61,7 +61,6 @@ class AfterPlaceOrder implements ObserverInterface {
                 $this->_redirect->redirect($this->_response, $_SESSION['openpay_3d_secure_url']);
             }
             if ($charge->status == 'in_progress' && ($charge->id != $charge->authorization)) {
-                $this->logger->debug('#Preautorizado...', array('ext_order_id' => $order->getExtOrderId(), 'trx' => $charge->id));
                 $order->setState($status)->setStatus($status);
                 $order->addStatusHistoryComment("Preautorización realizada exitosamente");
                 $order->save();
