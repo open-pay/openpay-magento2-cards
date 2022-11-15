@@ -41,7 +41,6 @@ define(
                 if (country == 'CO') $("#openpay_installments").show();
                 if (country == 'PE') {
                     data.installments = data.installments.map(Number);
-                    console.log(data.installments);
                     if(data.installments.indexOf(1) < 0) data.installments.push(1);
                     data.installments.sort( function (a,b) { return a - b });
                     window.handleInstallmentsPE(data.installments);
@@ -260,7 +259,7 @@ define(
             /**
              * Prepare and process payment information
              */
-            preparePayment: function (e) {
+            preparePayment: function () {
                 var self = this;
                 var $form = $('#' + this.getCode() + '-form');
 
