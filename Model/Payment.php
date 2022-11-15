@@ -316,7 +316,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $infoInstance->setAdditionalInformation('installments',
             isset($additionalData['installments']) ? $additionalData['installments'] : null
         );
-        
+
         $infoInstance->setAdditionalInformation('save_cc',
             isset($additionalData['save_cc']) ? $additionalData['save_cc'] : null
         );
@@ -579,9 +579,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $charge_request['source_id'] = $this->validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number);
                 $this->logger->debug("SAVE_CC GUARDAR ". $save_cc);
                 $_SESSION['card_new'] = '1';
+            }
             // valida una tarjeta guardada para actualizarla
-            }else if ($this->save_cc == '1' && $openpay_cc != 'new') {
-                $this->logger->debug('SAVE_CC UPDATE ');
+            if ($this->save_cc == '1' && $openpay_cc != 'new') {
+                $this->logger->debug('SAVE_CC UPDATE '.$save_cc. '$openpay_cc '.$openpay_cc);
                 $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
                 $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
                         'cvv2' => $cvv2
@@ -593,20 +594,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                     throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
                 }
                 $charge_request['source_id'] = $openpay_cc;
-            // valida en no guardar tarjeta
-            }else if ($save_cc == '0' && $openpay_cc != 'new') {
-                $this->logger->debug("SAVE_CC NO GUARDAR ". $save_cc);
-                // Update cvv to id card
-                $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
-                $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
-                        'cvv2' => $cvv2
-                    ],
-                    [
-                        'sk' => $this->sk
-                    ]);
-                if($dataCVV->http_code != 200) {
-                    throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
-                }
+            }
+
+            if ($this->save_cc == '2' && $openpay_cc != 'new'){
                 $charge_request['source_id'] = $openpay_cc;
             }
 
@@ -720,7 +710,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $card_number_bin = substr($card_number, 0, 6);
         $card_number_complement = substr($card_number, -4);
         foreach ($cards as $card) {
-            $this->logger->debug('validateNewCard', array('card => ' => $card->card_number));
+
             if($card_number_bin == substr($card->card_number, 0, 6) && $card_number_complement == substr($card->card_number, -4)) {
                 $errorMsg = "La tarjeta ya se encuentra registrada, seleccionala de la lista de tarjetas.";
                 $this->logger->error('validateNewCard', array('#ERROR validateNewCard() => ' => $errorMsg));
@@ -865,7 +855,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     private function getCreditCards($customer, $customer_created_at) {
         $from_date = date('Y-m-d', strtotime($customer_created_at."- 1 day"));
         $to_date = date('Y-m-d');
-        
         try {
             return $customer->cards->getList(array(
                 'creation[gte]' => $from_date,
@@ -873,8 +862,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 'offset' => 0,
                 'limit' => 10
             ));
-            $this->logger->debug('CREDIT CARDS', $customer->cards());
-
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }

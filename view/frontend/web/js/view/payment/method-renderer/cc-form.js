@@ -283,12 +283,11 @@ define(
                 }
 
                 if ($('#openpay_cc').val() == 'new' && $("#nombre_titular").val().length < 1 ) {
-                    console.log("Valida nueva tarjeta con holdcardname");
-                    $("#openpay_cards_cc_holder_name-error").css('display', 'block');
-                    $("#nombre_titular").focus();
-                } else {
-                    $("#openpay_cards_cc_holder_name-error").css('display', 'none');
-                }
+                     $("#openpay_cards_cc_holder_name-error").css('display', 'block');
+                     $("#nombre_titular").focus();
+                 } else {
+                     $("#openpay_cards_cc_holder_name-error").css('display', 'none');
+                 }
 
                 if ($form.validation() && $form.validation('isValid')) {
                     this.messageContainer.clear();
