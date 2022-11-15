@@ -579,9 +579,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $charge_request['source_id'] = $this->validateNewCard($customer_data, $charge_request, $token, $device_session_id, $card_number);
                 $this->logger->debug("SAVE_CC GUARDAR ". $save_cc);
                 $_SESSION['card_new'] = '1';
+            }
             // valida una tarjeta guardada para actualizarla
-            }else if ($this->save_cc == '1' && $openpay_cc != 'new') {
-                $this->logger->debug('SAVE_CC UPDATE ');
+            if ($this->save_cc == '1' && $openpay_cc != 'new') {
+                $this->logger->debug('SAVE_CC UPDATE '.$save_cc. '$openpay_cc '.$openpay_cc);
                 $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
                 $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
                         'cvv2' => $cvv2
@@ -593,20 +594,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                     throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
                 }
                 $charge_request['source_id'] = $openpay_cc;
-            // valida en no guardar tarjeta
-            }else if ($save_cc == '0' && $openpay_cc != 'new') {
-                $this->logger->debug("SAVE_CC NO GUARDAR ". $save_cc);
-                // Update cvv to id card
-                $path = sprintf('/%s/customers/%s/cards/%s', $this->merchant_id, $openpay_customer_id, $openpay_cc);
-                $dataCVV = $this->openpayRequest->make($path, $this->country, $this->is_sandbox, 'PUT', [
-                        'cvv2' => $cvv2
-                    ],
-                    [
-                        'sk' => $this->sk
-                    ]);
-                if($dataCVV->http_code != 200) {
-                    throw new \Magento\Framework\Validator\Exception(__('Error al intentar pagar con la tarjeta seleccionada, intente otra método de pago'));
-                }
+            }
+
+            if ($this->save_cc == '2' && $openpay_cc != 'new'){
                 $charge_request['source_id'] = $openpay_cc;
             }
 

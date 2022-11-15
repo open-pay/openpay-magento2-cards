@@ -36,6 +36,12 @@ class OpenpayRequest {
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
         }
 
+        if(!empty($data) && $method == 'PUT'){
+            $payload = json_encode($data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        }
+
         if ($auth != null) {
             curl_setopt($ch, CURLOPT_USERPWD, $auth['sk'].':'.'');
         }
