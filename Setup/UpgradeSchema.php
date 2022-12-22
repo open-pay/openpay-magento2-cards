@@ -9,8 +9,8 @@ use Magento\Framework\Setup\ModuleContextInterface;
 class UpgradeSchema implements UpgradeSchemaInterface {
     
     protected $logger;
-    
-    public function __construct(\Psr\Log\LoggerInterface $logger_interface) {        
+
+    public function __construct(\Openpay\Cards\Logger\Logger $logger_interface) {
         $this->logger = $logger_interface;
     }
 

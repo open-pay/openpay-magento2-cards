@@ -26,7 +26,12 @@ class AfterPlaceOrder implements ObserverInterface {
     protected $openpayCustomerFactory;
 
     public function __construct(
-    Config $config, \Magento\Sales\Model\Order $order, \Magento\Framework\App\Response\RedirectInterface $redirect, \Magento\Framework\App\ActionFlag $actionFlag, \Psr\Log\LoggerInterface $logger_interface, \Magento\Framework\App\ResponseInterface $response
+    Config $config,
+    \Magento\Sales\Model\Order $order,
+    \Magento\Framework\App\Response\RedirectInterface $redirect,
+    \Magento\Framework\App\ActionFlag $actionFlag,
+    \Openpay\Cards\Logger\Logger $logger_interface,
+    \Magento\Framework\App\ResponseInterface $response
     ) {
         $this->config = $config;
         $this->order = $order;

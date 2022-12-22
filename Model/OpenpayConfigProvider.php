@@ -13,7 +13,7 @@ use Magento\Checkout\Model\Cart;
 class OpenpayConfigProvider implements ConfigProviderInterface
 {
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var \Openpay\Cards\Logger\Logger
      */
     protected $logger;
 
@@ -36,14 +36,13 @@ class OpenpayConfigProvider implements ConfigProviderInterface
 
     protected $cart;
 
-
     /**
-     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Openpay\Cards\Logger\Logger $logger
      * @param PaymentHelper $paymentHelper
      * @param OpenpayPayment $payment
      */
     public function __construct(
-        \Psr\Log\LoggerInterface $logger,
+        \Openpay\Cards\Logger\Logger $logger,
         PaymentHelper $paymentHelper,
         OpenpayPayment $payment,
         Cart $cart) {
