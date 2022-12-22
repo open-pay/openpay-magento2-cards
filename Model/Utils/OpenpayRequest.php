@@ -11,7 +11,7 @@ class OpenpayRequest {
      * @param  $logger_interface
      */
     public function __construct(
-        \Psr\Log\LoggerInterface $logger
+        \Openpay\Cards\Logger\Logger $logger
     ) {
         $this->logger = $logger;
     }

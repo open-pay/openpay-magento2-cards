@@ -36,7 +36,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             Context $context,
             \Magento\Framework\App\Request\Http $request,
             OpenpayPayment $payment,
-            \Psr\Log\LoggerInterface $logger_interface,
+            \Openpay\Cards\Logger\Logger $logger_interface,
             \Magento\Sales\Model\Service\InvoiceService $invoiceService,
             \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
             \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
@@ -62,6 +62,12 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $body = file_get_contents('php://input');
             $json = json_decode($body);
             $openpay = $this->payment->getOpenpayInstance();
+
+            $this->logger->debug("JSON_OBJECT - " . json_encode($json));
+            if(isset($json->type) && $json->type == "verification"){
+                header('HTTP/1.1 200 OK');
+                return;
+            }
 
             /*JSON Body Validations*/
             if(!isset($json->transaction)) throw new Exception("Transaction object not found in webhook request", 404);

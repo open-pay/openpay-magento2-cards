@@ -139,7 +139,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             TimezoneInterface $localeDate,
             CountryFactory $countryFactory,
             Openpay $openpay,
-            \Psr\Log\LoggerInterface $logger_interface,
+            \Openpay\Cards\Logger\Logger $logger_interface,
             Customer $customerModel,
             CustomerSession $customerSession,
             \Openpay\Cards\Model\OpenpayCustomerFactory $openpayCustomerFactory,
