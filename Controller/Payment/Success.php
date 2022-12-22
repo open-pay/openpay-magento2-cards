@@ -41,7 +41,7 @@ class Success extends \Magento\Framework\App\Action\Action
      * @param OpenpayPayment $payment
      * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
      * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Psr\Log\LoggerInterface $logger_interface
+     * @param \Openpay\Cards\Logger\Logger $logger_interface
      * @param \Magento\Sales\Model\Service\InvoiceService $invoiceService
      * @param \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder
      * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
@@ -60,7 +60,7 @@ class Success extends \Magento\Framework\App\Action\Action
             OpenpayPayment $payment,
             \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
             \Magento\Checkout\Model\Session $checkoutSession,
-            \Psr\Log\LoggerInterface $logger_interface,
+            \Openpay\Cards\Logger\Logger $logger_interface,
             \Magento\Sales\Model\Service\InvoiceService $invoiceService,
             \Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface $transactionBuilder,
             \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
