@@ -64,7 +64,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $openpay = $this->payment->getOpenpayInstance();
 
             $this->logger->debug("JSON_OBJECT - " . json_encode($json));
-            if(isset($json->type) && $json->type == "verification"){
+            if(isset($json->type) && $json->type == "verification" || !isset($json)){
                 header('HTTP/1.1 200 OK');
                 return;
             }
