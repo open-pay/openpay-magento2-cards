@@ -63,6 +63,12 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $json = json_decode($body);
             $openpay = $this->payment->getOpenpayInstance();
 
+            $this->logger->debug("JSON_OBJECT - " . json_encode($json));
+            if(isset($json->type) && $json->type == "verification"){
+                header('HTTP/1.1 200 OK');
+                return;
+            }
+
             /*JSON Body Validations*/
             if(!isset($json->transaction)) throw new Exception("Transaction object not found in webhook request", 404);
             if(!isset($json->type)) throw new Exception("Charge type not found in webhook request", 404);
