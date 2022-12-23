@@ -33,13 +33,13 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
     protected $searchCriteriaBuilder;
 
     public function __construct(
-            Context $context,
-            \Magento\Framework\App\Request\Http $request,
-            OpenpayPayment $payment,
-            \Openpay\Cards\Logger\Logger $logger_interface,
-            \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-            \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
-            \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+        Context $context,
+        \Magento\Framework\App\Request\Http $request,
+        OpenpayPayment $payment,
+        \Openpay\Cards\Logger\Logger $logger_interface,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
+        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
         parent::__construct($context);
         $this->request = $request;
@@ -64,7 +64,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $openpay = $this->payment->getOpenpayInstance();
 
             $this->logger->debug("JSON_OBJECT - " . json_encode($json));
-            if(isset($json->type) && $json->type == "verification"){
+            if( (isset($json->type) && $json->type == "verification") || empty($json) || json_encode($json) == "{}"){
                 header('HTTP/1.1 200 OK');
                 return;
             }
@@ -173,7 +173,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             header('HTTP/1.1 200 OK');
 
         } catch (\Exception $e) {
-            $this->logger->error('#webhook-cards-Exception', array('msg' => $e->getMessage(), 'code' => $e->getCode()));
+            $this->logger->error('#webhook-cards-exception', array('msg' => $e->getMessage(), 'code' => $e->getCode()));
             header("HTTP/1.0 500 Server Error");
         }
         exit;

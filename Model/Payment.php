@@ -1113,13 +1113,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @return mixed
      */
     public function createWebhook() {
+        $this->logger->debug('#payment.createWebhook', Array());
         $openpay = $this->getOpenpayInstance();
-
         $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
         $uri = $base_url."openpay/cards/webhook";
         $webhooks = $openpay->webhooks->getList([]);
         $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
         if($webhookCreated){
+            $this->logger->debug('#payment.createWebhook.isWebhookCreated', array('isWebhookCreated' => $webhookCreated->url) );
             return $webhookCreated;
         }
 
