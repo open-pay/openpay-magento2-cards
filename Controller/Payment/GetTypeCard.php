@@ -24,13 +24,13 @@ class GetTypeCard extends \Magento\Framework\App\Action\Action{
      *
      * @param Context $context
      * @param OpenpayPayment $payment
-     * @param \Psr\Log\LoggerInterface $logger_interface
+     * @param \Openpay\Cards\Logger\Logger $logger_interface
      * @param \Openpay\Cards\Model\Utils\OpenpayRequest $openpayRequest
      */
     public function __construct(
         Context $context,
         OpenpayPayment $payment,
-        \Psr\Log\LoggerInterface $logger_interface,
+        \Openpay\Cards\Logger\Logger $logger_interface,
         \Openpay\Cards\Model\Utils\OpenpayRequest $openpayRequest
     ) {
         parent::__construct($context);
