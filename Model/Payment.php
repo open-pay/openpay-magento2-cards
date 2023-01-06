@@ -166,85 +166,87 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->country_factory = $countryFactory;
 
         $this->is_active = $this->getConfigData('active');
-        $this->is_sandbox = $this->getConfigData('is_sandbox');
-        $this->country = $this->getConfigData('country');
-        $this->merchant_classification = $this->getConfigData('merchant_classification');
+        if ($this->is_active){
+            $this->is_sandbox = $this->getConfigData('is_sandbox');
+            $this->country = $this->getConfigData('country');
+            $this->merchant_classification = $this->getConfigData('merchant_classification');
 
-        $this->_canRefund = $this->country === 'MX' ? true : false;
-        $this->_canRefundInvoicePartial = $this->country === 'MX' ? true : false;
+            $this->_canRefund = $this->country === 'MX' ? true : false;
+            $this->_canRefundInvoicePartial = $this->country === 'MX' ? true : false;
 
-        $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
-        $this->sandbox_sk = $this->getConfigData('sandbox_sk');
-        $this->sandbox_pk = $this->getConfigData('sandbox_pk');
-        $this->live_merchant_id = $this->getConfigData('live_merchant_id');
-        $this->live_sk = $this->getConfigData('live_sk');
-        $this->live_pk = $this->getConfigData('live_pk');
+            $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
+            $this->sandbox_sk = $this->getConfigData('sandbox_sk');
+            $this->sandbox_pk = $this->getConfigData('sandbox_pk');
+            $this->live_merchant_id = $this->getConfigData('live_merchant_id');
+            $this->live_sk = $this->getConfigData('live_sk');
+            $this->live_pk = $this->getConfigData('live_pk');
 
-        $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
-        $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
-        $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
-        $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';
-        $this->isAvailableInstallments = $this->country === 'PE' ?  $this->getConfigData('installments') : false;
-        $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
-        $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
+            $this->merchant_id = $this->is_sandbox ? $this->sandbox_merchant_id : $this->live_merchant_id;
+            $this->sk = $this->is_sandbox ? $this->sandbox_sk : $this->live_sk;
+            $this->pk = $this->is_sandbox ? $this->sandbox_pk : $this->live_pk;
+            $this->months_interest_free = $this->country === 'MX' ? $this->getConfigData('interest_free') : '1';
+            $this->isAvailableInstallments = $this->country === 'PE' ?  $this->getConfigData('installments') : false;
+            $this->use_card_points = $this->country === 'MX' ? $this->getConfigData('use_card_points') : '0';
+            $this->iva = $this->country === 'CO' ? $this->getConfigData('iva') : '0';
 
-        // Se valida por pais para COF
-        if ($this->country === "MX") {
-            $this->save_cc = $this->getConfigData('save_cc_mx');
-        }
-
-        if ($this->country === "CO") {
-            $this->save_cc = $this->getConfigData('save_cc_co');
-        }
-
-        if ($this->country === "PE") {
-            $this->save_cc = $this->getConfigData('save_cc_pe');
-        }
-
-        $this->minimum_amounts = $this->getConfigData('minimum_amounts');
-        $this->config_months = $this->minimum_amounts ? array(
-                                        "3" => $this->getConfigData('three_months'),
-                                        "6" => $this->getConfigData('six_months'),
-                                        "9" => $this->getConfigData('nine_months'),
-                                        "12" => $this->getConfigData('twelve_months'),
-                                        "18" => $this->getConfigData('eighteen_months')
-        ) : null;
-        $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';
-        $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
-
-        $this->merchant_classification = $this->getMerchantInfo();
-        $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
-        $this->configWriter->save('payment/openpay_cards/merchant_classification',  $classification);
-
-
-        $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
-
-        $this->addressFormat = $addressFormat;
-        $this->productFormat = $productFormat;
-
-        $this->processing_openpay = $this->getConfigData('processing_openpay');
-        $this->pending_payment_openpay = $this->getConfigData('pending_payment_openpay');
-        $this->canceled_openpay = $this->getConfigData('canceled_openpay');
-
-        $this->openpay = $openpay;
-        $this->openpayRequest = $openpayRequest;
-
-        $this->currencyUtils = $currencyUtils;
-        $this->supported_currency_codes = $this->currencyUtils->getSupportedCurrenciesByCountryCode($this->country);
-
-        if($this->merchant_classification === 'eglobal'){
-            if(empty($this->getConfigData('affiliation_bbva'))){
-                $this->charge_type = '3d';
-                $this->configWriter->save('payment/openpay_cards/charge_type', '3d');
-                throw new \Magento\Framework\Validator\Exception(__("The bbva affiliation field is required."));
+            // Se valida por pais para COF
+            if ($this->country === "MX") {
+                $this->save_cc = $this->getConfigData('save_cc_mx');
             }
-        }else{
-            if(!empty($this->getConfigData('affiliation_bbva'))){
-                $this->charge_type = 'direct';
-                $this->affiliation_bbva = '';
-                $this->configWriter->save('payment/openpay_cards/affiliation_bbva', '');
-                $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
+
+            if ($this->country === "CO") {
+                $this->save_cc = $this->getConfigData('save_cc_co');
             }
+
+            if ($this->country === "PE") {
+                $this->save_cc = $this->getConfigData('save_cc_pe');
+            }
+
+            $this->minimum_amounts = $this->getConfigData('minimum_amounts');
+            $this->config_months = $this->minimum_amounts ? array(
+                                            "3" => $this->getConfigData('three_months'),
+                                            "6" => $this->getConfigData('six_months'),
+                                            "9" => $this->getConfigData('nine_months'),
+                                            "12" => $this->getConfigData('twelve_months'),
+                                            "18" => $this->getConfigData('eighteen_months')
+            ) : null;
+            $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';
+            $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
+            
+            $this->merchant_classification = $this->getMerchantInfo();
+            $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
+            $this->configWriter->save('payment/openpay_cards/merchant_classification',  $classification);
+
+
+            $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
+
+            $this->addressFormat = $addressFormat;
+            $this->productFormat = $productFormat;
+
+            $this->processing_openpay = $this->getConfigData('processing_openpay');
+            $this->pending_payment_openpay = $this->getConfigData('pending_payment_openpay');
+            $this->canceled_openpay = $this->getConfigData('canceled_openpay');
+
+            $this->openpay = $openpay;
+            $this->openpayRequest = $openpayRequest;
+
+            $this->currencyUtils = $currencyUtils;
+            $this->supported_currency_codes = $this->currencyUtils->getSupportedCurrenciesByCountryCode($this->country);
+
+            if($this->merchant_classification === 'eglobal'){
+                if(empty($this->getConfigData('affiliation_bbva'))){
+                    $this->charge_type = '3d';
+                    $this->configWriter->save('payment/openpay_cards/charge_type', '3d');
+                    throw new \Magento\Framework\Validator\Exception(__("The bbva affiliation field is required."));
+                }
+            }else{
+                if(!empty($this->getConfigData('affiliation_bbva'))){
+                    $this->charge_type = 'direct';
+                    $this->affiliation_bbva = '';
+                    $this->configWriter->save('payment/openpay_cards/affiliation_bbva', '');
+                    $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
+                }
+            }   
         }
     }
 
