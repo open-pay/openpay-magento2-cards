@@ -956,6 +956,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         Openpay::setSandboxMode($this->is_sandbox);
         $classification = 'Openpay';
 
+        if($this->is_active == "0"){
+            return;
+        }
+
         if($this->country != "PE") {
             try {
                 $merchantInfo = $openpay->getMerchantInfo();
