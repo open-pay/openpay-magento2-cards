@@ -546,30 +546,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 }
         }
 
-
-        //Garantia de contracargos (solo para MX)
-        if ($this->country == 'MX') {
-            if ($this->validateAddress($shipping)){
-                $charge_request['ship_to'] = [
-                    'phone_area_code'=> '+52',
-                    'address' => $this->addressFormat::formatAddress($shipping),
-                    'name' => $shipping->getFirstname(),
-                    'last_name' => $shipping->getLastname(),
-                    'phone_number' => $shipping->getTelephone(),
-                    'email' => $order->getCustomerEmail(),
-                    'method'=> 'card'
-                ];
-            }
-            if ($this->validateAddress($billing)) {
-                $charge_request['billing']['address'] = $this->addressFormat::formatAddress($billing, $this->country, false);
-            }
-
-            $infoProducts = $this->productFormat->getInfoProducts($order);
-
-            $charge_request['product_sum'] = $infoProducts['productSum'];
-            $charge_request['products'] = $infoProducts['products'];
-        }
-
         try {
             $openpayCustomerFactory = $this->customerSession->isLoggedIn() ? $this->hasOpenpayAccount($this->customerSession->getCustomer()->getId()) : null;
             $openpay_customer_id = $openpayCustomerFactory ? $openpayCustomerFactory->openpay_id : null;
