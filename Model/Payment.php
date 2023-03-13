@@ -985,7 +985,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
         $grandTotal = (int) $cart->getQuote()->getGrandTotal();
-        $months = explode(',', $this->months_interest_free);
+
+        if(version_compare(phpversion(), '8.1.0', '>=')){
+            $months = explode(',', $this->months_interest_free ?? '');
+        } else {
+            $months = explode(',', $this->months_interest_free);
+        }
 
         if($this->minimum_amounts && $this->country == 'MX'){
             foreach($months as $key => $value){
