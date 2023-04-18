@@ -14,8 +14,6 @@
     <head>    
         <!--script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js" src_type="url" />        
         <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js" src_type="url" /-->    
-        <css src="Openpay_Cards::css/bootstrap.css" />            
-        <!-- <script src="Openpay_Cards::js/bootstrap.js"/> -->
     </head>
     <body>
         <referenceBlock name="head.additional">
