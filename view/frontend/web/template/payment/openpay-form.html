@@ -82,6 +82,59 @@
         font-size: 1.2rem;
     }
 
+    /*
+        Ajustes responsive
+    */
+    @media screen and (min-width: 220px) and (max-width: 479px) {
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 480px) and (max-width: 768px) {
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 769px) and (max-width: 1024px){
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 1025px) and (max-width: 1200px) {
+        .payment-method__select-card{
+            width: 70% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 70% !important;
+        }
+    }
+
+    @media screen and (min-width: 1201px) {
+        .payment-method__select-card{
+            width: 70% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 70% !important;
+        }
+    }
+
 </style>
 <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
     <div class="payment-method-title field choice">
