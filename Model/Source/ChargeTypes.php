@@ -24,4 +24,11 @@ class ChargeTypes
             array('value' => '3d', 'label' => '3D Secure')            
         );     
     }
+    public function getTypesCoPe()
+    {
+        return array(
+            array('value' => 'direct', 'label' => 'Directo'),
+            array('value' => '3d', 'label' => '3D Secure')
+        );
+    }
 }
