@@ -210,7 +210,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
         $this->charge_type = $this->getConfigData('charge_type') ? $this->getConfigData('charge_type') : 'direct';
-        $this->openpayLogger->debug("{ 'country':'".$this->country. "', 'charge_type':'".$this->charge_type."' }");
 
         $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
 
