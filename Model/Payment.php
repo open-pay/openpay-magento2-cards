@@ -209,7 +209,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "12" => $this->getConfigData('twelve_months'),
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
-        $this->charge_type = $this->country === 'MX' ? $this->getConfigData('charge_type') : 'direct';
+        $this->charge_type = $this->getConfigData('charge_type') ? $this->getConfigData('charge_type') : 'direct';
+
         $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
 
         $this->merchant_classification = $this->getMerchantInfo();
@@ -504,14 +505,15 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             'capture' => $capture
         );
 
-        if ($this->country === 'MX') {
             $charge_request['use_card_points'] = $use_card_points;
             // 3D Secure
+
+            $this->logger->debug("COMO PROCESAR EL CARGO (444d) ". $this->getConfigData('charge_type'));
+            $this->logger->debug("3DS ACTIVO (444d) ". $this->charge_type);
             if ($this->charge_type == '3d') {
                 $charge_request['use_3d_secure'] = true;
                 $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
             }
-        }
 
         if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
             $charge_request['affiliation_bbva'] = $this->affiliation_bbva;
