@@ -52,35 +52,37 @@ class AfterPlaceOrder implements ObserverInterface {
 
         if ($order->getPayment()->getMethod() == 'openpay_cards') {
             $charge = $this->config->getOpenpayCharge($order->getExtOrderId(), $order->getExtCustomerId());
-            $this->logger->debug('#AfterPlaceOrder openpay_cards', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));
+            $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:55', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));
 
             if($charge->status == 'completed') {
-                $order->setStatus($status);
+                $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:58', array('$charge->status' => $charge->status));
+                $order->setState($status)->setStatus($status);
+                $order->addStatusHistoryComment("Pago completado después de realizar el pedido");
                 $order->save();
             }
             if ($charge->status == 'charge_pending' && isset($_SESSION['openpay_3d_secure_url'])) {
-                $this->logger->debug('#AfterPlaceOrder', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_3d_secure_url']));
+                $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:64', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_3d_secure_url']));
                 $order->setStatus($this->config->getCustomStatus('pending_payment'));
+                $order->addStatusHistoryComment("Pago pendiente, evaluando 3DSecure");
                 $order->save();
                 $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
                 $this->_redirect->redirect($this->_response, $_SESSION['openpay_3d_secure_url']);
             }
             if ($charge->status == 'in_progress' && ($charge->id != $charge->authorization)) {
+                $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:72', array('$charge->status' => 'in_progress'));
                 $order->setState($status)->setStatus($status);
                 $order->addStatusHistoryComment("Preautorización realizada exitosamente");
                 $order->save();
             }
         } elseif ($order->getPayment()->getMethod() == 'openpay_banks') {
-            $this->logger->debug('#AfterPlaceOrder openpay_banks', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'ext_order_id' => $order->getExtOrderId()));
+            $this->logger->debug('#AfterPlaceOrder.openpay_banks.ln:77', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'ext_order_id' => $order->getExtOrderId()));
 
             if ($order->getStatus() == 'pending' && isset($_SESSION['openpay_pse_redirect_url'])) {
-                $this->logger->debug('#AfterPlaceOrder openpay_banks', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_pse_redirect_url']));
+                $this->logger->debug('#AfterPlaceOrder.openpay_banks.ln:80', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_pse_redirect_url']));
                 $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
                 $this->_redirect->redirect($this->_response, $_SESSION['openpay_pse_redirect_url']);
             }
         }
-
         return $this;
     }
-
 }
