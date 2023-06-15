@@ -149,8 +149,11 @@ class Success extends \Magento\Framework\App\Action\Action
 
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);
+            $order->setBaseTotalPaid($charge->amount);
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
             $order->save();
+
+            $this->logger->debug('#success.order.save', array('order.state' => $order->getState(), 'order.status' => $order->getStatus(), 'order.base.total.paid' => $order->getBaseTotalPaid()));
 
             $this->searchCriteriaBuilder->addFilter('order_id', $order_id);
             $list = $this->transactionRepository->getList(
