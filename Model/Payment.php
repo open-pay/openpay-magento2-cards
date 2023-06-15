@@ -209,7 +209,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "12" => $this->getConfigData('twelve_months'),
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
-        $this->charge_type = $this->getConfigData('charge_type') ? $this->getConfigData('charge_type') : 'direct';
+        
+        $this->charge_type = $this->country === "MX" ? $this->getConfigData('charge_type_mx') : $this->getConfigData('charge_type_co_pe');
 
         $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
 
