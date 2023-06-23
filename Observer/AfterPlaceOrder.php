@@ -54,12 +54,6 @@ class AfterPlaceOrder implements ObserverInterface {
             $charge = $this->config->getOpenpayCharge($order->getExtOrderId(), $order->getExtCustomerId());
             $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:55', array('order_id' => $orderId[0], 'order_status' => $order->getStatus(), 'charge_id' => $charge->id, 'ext_order_id' => $order->getExtOrderId(), 'openpay_status' => $charge->status));
 
-            if($charge->status == 'completed') {
-                $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:58', array('$charge->status' => $charge->status));
-                $order->setState($status)->setStatus($status);
-                $order->addStatusHistoryComment("Pago completado después de realizar el pedido");
-                $order->save();
-            }
             if ($charge->status == 'charge_pending' && isset($_SESSION['openpay_3d_secure_url'])) {
                 $this->logger->debug('#AfterPlaceOrder.openpay_cards.ln:64', array('ext_order_id' => $order->getExtOrderId(), 'redirect_url' => $_SESSION['openpay_3d_secure_url']));
                 $order->setStatus($this->config->getCustomStatus('pending_payment'));
