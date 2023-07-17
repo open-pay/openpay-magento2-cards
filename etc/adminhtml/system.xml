@@ -16,7 +16,10 @@
             <group id="openpay_cards" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Openpay (Tarjetas)</label>
                 <comment>
-                    <![CDATA[<a href="http://openpay.mx/" target="_blank">Clic aquí para registrar una cuenta con Openpay</a>]]>
+                    <![CDATA[
+                    <p>Version: 3.4.24</p>
+                    <a href="http://openpay.mx/" target="_blank">Clic aquí para registrar una cuenta con Openpay</a>
+                    ]]>
                 </comment>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Habilitar</label>
@@ -86,7 +89,7 @@
                         <field id="is_sandbox">0</field>
                     </depends>
                 </field>
-                <field id="charge_type" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="charge_type_mx" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>¿Cómo procesar el cargo?</label>
                     <source_model>Openpay\Cards\Model\Source\ChargeTypes::getTypes</source_model>
                     <depends>
@@ -94,6 +97,14 @@
                         <field id="merchant_classification">Openpay</field>
                     </depends>
                     <comment>¿Qué es la autenticación selectiva? Es cuando se detecta riesgo en la transacción y se manda por 3D Secure.</comment>
+                </field>
+                <field id="charge_type_co_pe" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>¿Cómo procesar el cargo?</label>
+                    <source_model>Openpay\Cards\Model\Source\ChargeTypes::getTypesCoPe</source_model>
+                    <depends>
+                        <field id="country" separator="|">CO|PE</field>
+                        <field id="merchant_classification">Openpay</field>
+                    </depends>
                 </field>
                 <field id="payment_action" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Configuración del cargo</label>

@@ -23,9 +23,6 @@
         margin-top: 1em !important;
         margin-bottom: 2em !important;
     }
-    .payment-method__select-card{
-        width: 25em !important;
-    }
 
     /* Tooltip guardar tarjeta */
     .tooltip-container {
@@ -83,6 +80,59 @@
         margin-top: 7px;
         color: #e02b27;
         font-size: 1.2rem;
+    }
+
+    /*
+        Ajustes responsive
+    */
+    @media screen and (min-width: 220px) and (max-width: 479px) {
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 480px) and (max-width: 768px) {
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 769px) and (max-width: 1024px){
+        .payment-method__select-card {
+            width: 100% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 100% !important;
+        }
+    }
+
+    @media screen and (min-width: 1025px) and (max-width: 1200px) {
+        .payment-method__select-card{
+            width: 70% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 70% !important;
+        }
+    }
+
+    @media screen and (min-width: 1201px) {
+        .payment-method__select-card{
+            width: 70% !important;
+        }
+
+        .input-text .payment-method__select-card{
+            width: 70% !important;
+        }
     }
 
 </style>

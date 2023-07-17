@@ -57,13 +57,13 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
      * @return \Magento\Framework\View\Result\Page
      */
     public function execute() {
-        $this->logger->debug('#webhook-cards');
+        $this->logger->debug('#Webhook.openpay_cards');
         try {
             $body = file_get_contents('php://input');
             $json = json_decode($body);
             $openpay = $this->payment->getOpenpayInstance();
 
-            $this->logger->debug("JSON_OBJECT - " . json_encode($json));
+            $this->logger->debug("#Webhook.openpay_cards.ln:66 json_input - " . json_encode($json));
             if( (isset($json->type) && $json->type == "verification") || empty($json) || json_encode($json) == "{}"){
                 header('HTTP/1.1 200 OK');
                 return;
@@ -71,15 +71,21 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
             /*JSON Body Validations*/
             if(!isset($json->transaction)) throw new Exception("Transaction object not found in webhook request", 404);
+            if(!isset($json->transaction->method)) throw new Exception("Charge method not found in webhook request", 404);
             if(!isset($json->type)) throw new Exception("Charge type not found in webhook request", 404);
+
+            /*Openpay Trx method Validation*/
+            if($json->transaction->method != 'card'){
+                header('HTTP/1.1 200 OK');
+                exit;
+            }
 
             /*Openpay Charge request*/
             $charge = $openpay->charges->get($json->transaction->id);
+            $this->logger->debug("#Webhook.openpay_cards.ln:85 Openpay_Charge - " . json_encode($charge));
+
             /*Openpay Charge Validation*/
             if(!$charge) throw new Exception("Charge not found in Openpay merchant", 404);
-
-            /*Openpay Trx Type Validation*/
-            if($json->transaction->method != 'card') throw new Exception("Transaction method is not card", 500);
 
             /*Getting Order Data*/
             $order = $this->_objectManager->create('Magento\Sales\Model\Order');
@@ -89,7 +95,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
 
             /*Logging Webhook data*/
-            $this->logger->debug('#webhook.data', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
+            $this->logger->debug('#Webhook.openpay_cards.ln:98', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
 
             /*Magento Order validation*/
             if($order_status == 'processing' || $order_status == 'completed'){
@@ -110,8 +116,11 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
                 $order->setState($status)->setStatus($status);
                 $order->setTotalPaid($charge->amount);
+                $order->setBaseTotalPaid($charge->amount);
                 $order->addStatusHistoryComment("Pago confirmado vía Webhook")->setIsCustomerNotified(true);
                 $order->save();
+
+                $this->logger->debug('#webhook.order.save', array('order.state' => $order->getState(), 'order.status' => $order->getStatus(), 'order.base.total.paid' => $order->getBaseTotalPaid()));
 
                 $this->searchCriteriaBuilder->addFilter('order_id', $order_id);
                 $list = $this->transactionRepository->getList(
