@@ -5,6 +5,7 @@ namespace Openpay\Cards\Model\Config;
 class OrderStatuses implements \Magento\Framework\Option\ArrayInterface
 {
     protected $statusCollectionFactory;
+    protected $context;
      
     public function __construct(
 		\Magento\Backend\Block\Template\Context $context,
