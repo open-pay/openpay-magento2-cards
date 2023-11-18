@@ -216,6 +216,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         $this->merchant_classification = $this->getMerchantInfo();
         $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
+        $this->logger->debug('#CLASSIFICATION: ', array('$order_id' => $classification ));
 
 
         $this->addressFormat = $addressFormat;
@@ -946,8 +947,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 return $this->error($e);
             }
         }
-        $this->configWriter->save('payment/openpay_cards/merchant_classification', $classification);
-
         return $classification;
     }
 
