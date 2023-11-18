@@ -216,10 +216,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
         $this->merchant_classification = $this->getMerchantInfo();
         $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
-        $this->configWriter->save('payment/openpay_cards/merchant_classification',  $classification);
 
-
-        $this->configWriter->save('payment/openpay_cards/title',  $classification." (Tarjetas de crédito/débito)");
 
         $this->addressFormat = $addressFormat;
         $this->productFormat = $productFormat;
