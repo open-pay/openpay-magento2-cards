@@ -174,7 +174,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $order->cancel();
                 $order->addStatusHistoryComment("La transacción no pudo ser procesada")->setIsCustomerNotified(true);
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
-                $order->setStatus($statusCanceled);
+                $order->setState($statusCanceled)->setStatus($statusCanceled);
                 $order->save();
                 $this->logger->debug('#webhook.trx.expired.end', array('Magento.order.invoice' => 'saved' ) );
             }
