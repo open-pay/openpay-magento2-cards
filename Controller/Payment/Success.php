@@ -133,7 +133,7 @@ class Success extends \Magento\Framework\App\Action\Action
                 $messageError = 'La transacción no pudo ser procesada, ' . $charge->error_message;
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __($messageError));
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
-                $order->setStatus($statusCanceled);
+                $order->setState($statusCanceled)->setStatus($statusCanceled);
                 $order->save();
                 $quote = $this->quoteRepository->get($quote_id);
                 $quote->setIsActive(true)->save();
