@@ -159,11 +159,17 @@ class Success extends \Magento\Framework\App\Action\Action
             $list = $this->transactionRepository->getList(
                 $this->searchCriteriaBuilder->create()
             );
+
+            $this->logger->info('#Init Success Transactions >>>');
             $transactions =  $list->getItems();
-            foreach ($transactions as $transaction) {
-                $transaction->setIsClosed(true);
-                $transaction->save();
+            if ($transactions) {
+                $this->logger->info('#Exist Transactions');
+                foreach ($transactions as $transaction) {
+                    $transaction->setIsClosed(true);
+                    $transaction->save();
+                }
             }
+            $this->logger->debug('#TransactionsList', array('$transactions', $transactions ));
 
             $requiresInvoice = true;
             /** @var InvoiceCollection $invoiceCollection */
