@@ -31,6 +31,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
     protected $invoiceService;
     protected $transactionRepository;
     protected $searchCriteriaBuilder;
+    protected $invoiceRepository;
 
     public function __construct(
         Context $context,
@@ -39,7 +40,8 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
         \Openpay\Cards\Logger\Logger $logger_interface,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
-        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
+        \Magento\Sales\Api\InvoiceRepositoryInterface $invoiceRepository
     ) {
         parent::__construct($context);
         $this->request = $request;
@@ -48,6 +50,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
         $this->invoiceService = $invoiceService;
         $this->transactionRepository = $transactionRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->invoiceRepository = $invoiceRepository;
     }
 
     /**
@@ -171,6 +174,22 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $this->logger->debug('#webhook.trx.succeeded.end', array('Magento.order.invoice' => 'saved' ) );
             }else{
                 $this->logger->debug('#webhook.trx.expired.start', array('webhook.type' => 'transaction.expired', 'openpay.charge.status' => 'expired' ));
+
+                $invoiceCollection = $order->getInvoiceCollection();
+                if ( $invoiceCollection->count() > 0 ) {
+                    /** @var Invoice $invoice */
+                    foreach ($invoiceCollection as $invoice ) {
+                        $this->logger->debug('#webhook.invoice.id', array('$invoice.id', $invoice->getId(), '$invoice.incrementId' => $invoice->getIncrementId() ));
+                        $this->logger->debug('#webhook.invoice.state', array('$invoice', $invoice->getState() ));
+                        $invoiceId = $invoice->getId();
+                        if ( $invoice->getState() == Invoice::STATE_OPEN || $invoice->getState() != Invoice::STATE_PAID) {
+                            $invoice->setState(Invoice::STATE_CANCELED);
+                            $this->invoiceRepository->save($invoice);
+                            break;
+                        }
+                    }
+                }
+                
                 $order->cancel();
                 $order->addStatusHistoryComment("La transacción no pudo ser procesada")->setIsCustomerNotified(true);
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
