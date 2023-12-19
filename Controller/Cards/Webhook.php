@@ -174,7 +174,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             }else{
                 $this->logger->debug('#webhook.trx.expired.start', array('webhook.type' => 'transaction.expired', 'openpay.charge.status' => 'expired' ));
                 $order->cancel();
-                $order->addStatusHistoryComment("La transacción no pudo ser procesada")->setIsCustomerNotified(true);
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __("La transacción no pudo ser procesada"))->setIsCustomerNotified(true);
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
                 $order->setState($statusCanceled)->setStatus($statusCanceled);
                 $order->save();
