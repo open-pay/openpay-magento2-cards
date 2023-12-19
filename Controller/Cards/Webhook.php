@@ -126,11 +126,18 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $list = $this->transactionRepository->getList(
                     $this->searchCriteriaBuilder->create()
                 );
+
+                // hotfix transactions not exist
+                $this->logger->info('#Webhook.transaction INIT >>>');
                 $transactions =  $list->getItems();
-                foreach ($transactions as $transaction) {
-                    $transaction->setIsClosed(true);
-                    $transaction->save();
+                if ($transactions) {
+                    $this->logger->info('#Webhook.transactions Exist Transaction');
+                    foreach ($transactions as $transaction) {
+                        $transaction->setIsClosed(true);
+                        $transaction->save();
+                    }
                 }
+                $this->logger->debug('#TransactionsList', array('$transactions', $transactions ));
 
                 $requiresInvoice = true;
                 /** @var InvoiceCollection $invoiceCollection */
