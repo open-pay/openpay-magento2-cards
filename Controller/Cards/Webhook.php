@@ -100,6 +100,8 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             /*Logging Webhook data*/
             $this->logger->debug('#Webhook.openpay_cards.ln:98', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
 
+            if(!isset($order_id)) throw new Exception("The requested resource doesn't exist", 404);
+
             /*Magento Order validation*/
             if($order_status == 'processing' || $order_status == 'completed'){
                 $this->logger->debug('#webhook.process.cancelled', array('Magento.order.status' => 'processing || completed'));
@@ -198,7 +200,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 }
                 
                 $order->cancel();
-                $order->addStatusHistoryComment("La transacción no pudo ser procesada")->setIsCustomerNotified(true);
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __("La transacción no pudo ser procesada"))->setIsCustomerNotified(true);
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
                 $order->setState($statusCanceled)->setStatus($statusCanceled);
                 $order->save();
@@ -209,9 +211,22 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
         } catch (\Exception $e) {
             $this->logger->error('#webhook-cards-exception', array('msg' => $e->getMessage(), 'code' => $e->getCode()));
-            header("HTTP/1.0 500 Server Error");
+            $this->errorException($e->getCode(), $e->getMessage());
         }
         exit;
+    }
+
+    public function errorException($errorCode, $msg) {
+        switch($errorCode) {
+            case 404: 
+                http_response_code (404);
+                break;
+            default:
+                http_response_code (500);
+                break;
+        }
+        print json_encode (array ('error' => $errorCode, 
+            'message' => $msg));
     }
 
     /**

@@ -1,6 +1,6 @@
 # Openpay-Magento2-Cards
 
-Extensión de pagos con tarjeta de crédito de Openpay para Magento2 (v2.4.0)
+Extensión de pagos con tarjeta de crédito de Openpay para Magento2 (v2.4.2)
 
 
 ## Instalación
