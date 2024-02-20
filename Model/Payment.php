@@ -19,6 +19,7 @@ use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Payment\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Payment\Model\Method\Cc;
 use Magento\Payment\Model\Method\Logger;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -35,7 +36,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Openpay\Data\Client as Openpay;
 use Openpay\Data\OpenpayApiTransactionError;
 
-class Payment extends \Magento\Payment\Model\Method\Cc
+class Payment extends Cc
 {
 
     const CODE = 'openpay_cards';
@@ -73,7 +74,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $iva = 0;
     protected $minimum_amounts = 0;
     protected $config_months;
-    protected $merchant_classification = '';
     protected $processing_openpay = '';
     protected $pending_payment_openpay = '';
     protected $canceled_openpay = '';
@@ -97,7 +97,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $openpayCustomerFactory;
 
     /**
-    *  @var \Magento\Framework\App\Config\Storage\WriterInterface
+    *  @var WriterInterface
     */
     protected $configWriter;
 
@@ -168,10 +168,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->is_active = $this->getConfigData('active');
         $this->is_sandbox = $this->getConfigData('is_sandbox');
         $this->country = $this->getConfigData('country');
-        $this->merchant_classification = $this->getConfigData('merchant_classification');
 
-        $this->_canRefund = $this->country === 'MX' || $this->country === 'PE' ? true : false;
-        $this->_canRefundInvoicePartial = $this->country === 'MX' || $this->country === 'PE' ? true : false;
+        // Se realiza mejora de if ternario
+        $this->_canRefund = $this->country === 'MX' || $this->country === 'PE';
+        $this->_canRefundInvoicePartial = $this->country === 'MX' || $this->country === 'PE';
 
         $this->sandbox_merchant_id = $this->getConfigData('sandbox_merchant_id');
         $this->sandbox_sk = $this->getConfigData('sandbox_sk');
@@ -209,13 +209,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                                         "12" => $this->getConfigData('twelve_months'),
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
-        
+
         $this->charge_type = $this->country === "MX" ? $this->getConfigData('charge_type_mx') : $this->getConfigData('charge_type_co_pe');
 
         $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
 
-        $this->merchant_classification = $this->getMerchantInfo();
-        $classification = ($this->merchant_classification === 'eglobal' ? 'BBVA' : 'Openpay');
+        $classification = 'Openpay';
         $this->logger->debug('#CLASSIFICATION: ', array('$order_id' => $classification ));
 
 
@@ -232,7 +231,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->currencyUtils = $currencyUtils;
         $this->supported_currency_codes = $this->currencyUtils->getSupportedCurrenciesByCountryCode($this->country);
 
-        if($this->merchant_classification === 'eglobal'){
+        /*if($this->merchant_classification === 'eglobal'){
             if(empty($this->getConfigData('affiliation_bbva'))){
                 $this->charge_type = '3d';
                 $this->configWriter->save('payment/openpay_cards/charge_type', '3d');
@@ -245,7 +244,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $this->configWriter->save('payment/openpay_cards/affiliation_bbva', '');
                 $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
             }
-        }
+        }*/
     }
 
     /**
@@ -302,11 +301,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $additionalData = ($data->getData('additional_data') != null) ? $data->getData('additional_data') : $data->getData();
 
         $infoInstance->setAdditionalInformation('device_session_id',
-            isset($additionalData['device_session_id']) ? $additionalData['device_session_id'] :  null
+            $additionalData['device_session_id'] ?? null
         );
-        $infoInstance->setAdditionalInformation('openpay_token',
-            isset($additionalData['openpay_token']) ? $additionalData['openpay_token'] : null
-        );
+        $infoInstance->setAdditionalInformation('openpay_token', $additionalData['openpay_token'] ?? null);
         $infoInstance->setAdditionalInformation('interest_free',
             isset($additionalData['interest_free']) ? $additionalData['interest_free'] : null
         );
@@ -514,9 +511,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
             }
 
-        if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
+        /*if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
             $charge_request['affiliation_bbva'] = $this->affiliation_bbva;
-        }
+        }*/
 
         if ($this->country === 'CO') {
             $charge_request['iva'] = $this->iva;
@@ -598,7 +595,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $this->logger->debug('3d_direct', array('redirect_url' => $charge->payment_method->url, 'openpay_id' => $charge->id, 'openpay_status' => $charge->status));
             }
 
-
             // Registra el ID de la transacción de Openpay
             $order->setExtOrderId($charge->id);
 
@@ -626,6 +622,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
                 $payment->setTransactionId($charge->id);
                 $payment->setCcLast4(substr($charge->card->card_number, -4));
+
                 $payment->setCcType($this->getCCBrandCode($charge->card->brand));
                 $payment->setCcExpMonth($charge->card->expiration_month);
                 $payment->setCcExpYear($charge->card->expiration_year);
@@ -844,7 +841,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
     }
 
-    public function getCreditCardList() {
+    public function getCreditCardList(): array
+    {
         $message = 'Selecciona tarjeta';
         if (!$this->customerSession->isLoggedIn()) {
             return array(array('value' => 'new', 'name' => $message));
@@ -876,16 +874,18 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
     }
 
-    public function existsOneCreditCard() {
+    public function existsOneCreditCard(): bool
+    {
         return count($this->getCreditCardList()) > 1;
     }
 
-    public function getBaseUrlStore(){
-        $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
-        return $base_url;
+    public function getBaseUrlStore(): string
+    {
+        return $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
     }
 
-    public function isLoggedIn() {
+    public function isLoggedIn(): bool
+    {
         return $this->customerSession->isLoggedIn();
     }
 
@@ -895,21 +895,24 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
      * @return bool
      */
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null) {
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null): bool
+    {
         return parent::isAvailable($quote);
     }
 
     /**
      * @return string
      */
-    public function getMerchantId() {
+    public function getMerchantId(): ?string
+    {
         return $this->merchant_id;
     }
 
     /**
      * @return string
      */
-    public function getPublicKey() {
+    public function getPublicKey(): ?string
+    {
         return $this->pk;
     }
 
@@ -920,7 +923,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     /**
      * @return boolean
      */
-    public function isSandbox() {
+    public function isSandbox(): bool
+    {
         return $this->is_sandbox;
     }
 
@@ -941,7 +945,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             try {
                 $merchantInfo = $openpay->getMerchantInfo();
                 $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
-                $classification = ($merchantInfo->classification === 'eglobal' ? 'BBVA' : 'Openpay');
                 return $merchantInfo->classification;
             } catch (Exception $e) {
                 return $this->error($e);
@@ -968,12 +971,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
         Openpay::setSandboxMode($this->is_sandbox);
 
-        if($this->merchant_classification === 'eglobal'){
-            Openpay::setClassificationMerchant($this->merchant_classification);
-            $userAgent = "BBVA-MTO2".$this->country."/v1";
-        }else{
+        //if($this->merchant_classification === 'eglobal'){
+          //  Openpay::setClassificationMerchant($this->merchant_classification);
+            //$userAgent = "BBVA-MTO2".$this->country."/v1";
+        //}else{
             $userAgent = "Openpay-MTO2".$this->country."/v2";
-        }
+        //}
 
         Openpay::setUserAgent($userAgent);
 
