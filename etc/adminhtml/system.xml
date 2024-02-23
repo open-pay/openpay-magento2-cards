@@ -17,7 +17,7 @@
                 <label>Openpay (Tarjetas)</label>
                 <comment>
                     <![CDATA[
-                    <p>Version: 3.4.28</p>
+                    <p>Version: 3.5.0</p>
                     <a href="http://openpay.mx/" target="_blank">Clic aquí para registrar una cuenta con Openpay</a>
                     ]]>
                 </comment>
@@ -32,21 +32,6 @@
                 <field id="country" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>País</label>
                     <source_model>Openpay\Cards\Model\Source\Countries::getOptions</source_model>
-                </field>
-                <field id="merchant_classification" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Clasificación del Comercio</label>
-                    <frontend_model>Openpay\Cards\Block\System\Config\Form\Field\Disable</frontend_model>
-                    <depends>
-                        <field id="country">MX</field>
-                    </depends>
-                </field>
-                <field id="affiliation_bbva" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Número de afiliación BBVA</label>
-                    <validate>validate-zero-or-greater validate-digits</validate>
-                    <comment>Ingresar afiliación BBVA.</comment>
-                    <depends>
-                        <field id="merchant_classification">BBVA</field>
-                    </depends>
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="0">
                     <label>Título</label>
