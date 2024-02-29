@@ -35,6 +35,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 
 use Openpay\Data\Client as Openpay;
 use Openpay\Data\OpenpayApiTransactionError;
+use Openpay\Data\OpenpayApiConnectionError;
 
 class Payment extends Cc
 {
@@ -360,6 +361,9 @@ class Payment extends Cc
 //            $charge = $openpay->charges->get($trx_id);
             $charge = $this->getOpenpayCharge($trx_id, $customer_id);
             $charge->refund($refundData);
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#refund Exception (charge->refund)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             throw new \Magento\Framework\Exception\LocalizedException(__($e->getMessage()));
         }
@@ -638,6 +642,9 @@ class Payment extends Cc
             } else {
                 throw new \Magento\Framework\Validator\Exception(__($this->error($e)));
             }
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#processCapture OpenpayApiConnectionError (makeOpenpayCharge)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             $this->_logger->error(__('Payment capturing error.'));
             $this->logger->error('ERROR', array('message' => $e->getMessage(), 'code' => $e->getCode()));
@@ -740,6 +747,9 @@ class Payment extends Cc
             }
 
             return $openpay_customer->charges->get($charge_id);
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#getOpenpayCharge OpenpayApiConnectionError (openpay->charges->get)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -798,6 +808,9 @@ class Payment extends Cc
         try {
             $openpay = $this->getOpenpayInstance();
             return $openpay->customers->add($data);
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#createOpenpayCustomer OpenpayApiConnectionError (openpay->customers->add)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -811,6 +824,9 @@ class Payment extends Cc
                 return false;
             }
             return $customer;
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#getOpenpayCustomer OpenpayApiConnectionError (openpay->customers->get)', array('message' => $e->getMessage()));
+            return false;
         } catch (\Exception $e) {
             return false;
         }
@@ -819,6 +835,9 @@ class Payment extends Cc
     private function createCreditCard($customer, $data) {
         try {
             return $customer->cards->add($data);
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#createCreditCard OpenpayApiConnectionError (customer->cards->add)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -836,6 +855,9 @@ class Payment extends Cc
                 'limit' => 10
             ));
 
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#getCreditCards OpenpayApiConnectionError (customer->cards->getList)', array('message' => $e->getMessage()));
+            throw new \Magento\Framework\Validator\Exception(__('Ocurrió un error interno. Intente más tarde.'));
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
@@ -946,6 +968,9 @@ class Payment extends Cc
                 $merchantInfo = $openpay->getMerchantInfo();
                 $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
                 return $merchantInfo->classification;
+            } catch (OpenpayApiConnectionError $e) {
+                $this->_logger->error('#getMerchantInfo OpenpayApiConnectionError (openpay->getMerchantInfo)', array('message' => $e->getMessage()));
+                return "Ocurrió un error interno. Intente más tarde.";
             } catch (Exception $e) {
                 return $this->error($e);
             }
@@ -971,12 +996,7 @@ class Payment extends Cc
         $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
         Openpay::setSandboxMode($this->is_sandbox);
 
-        //if($this->merchant_classification === 'eglobal'){
-          //  Openpay::setClassificationMerchant($this->merchant_classification);
-            //$userAgent = "BBVA-MTO2".$this->country."/v1";
-        //}else{
-            $userAgent = "Openpay-MTO2".$this->country."/v2";
-        //}
+        $userAgent = "Openpay-MTO2".$this->country."/v2";
 
         Openpay::setUserAgent($userAgent);
 
@@ -1133,6 +1153,9 @@ class Payment extends Cc
         try {
             $webhook = $openpay->webhooks->add($webhook_data);
             return $webhook;
+        } catch (OpenpayApiConnectionError $e) {
+            $this->_logger->error('#createWebhook OpenpayApiConnectionError (openpay->webhooks->add)', array('message' => $e->getMessage()));
+            return "Ocurrió un error interno. Intente más tarde.";
         } catch (Exception $e) {
             return $this->error($e);
         }

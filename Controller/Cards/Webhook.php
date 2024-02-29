@@ -20,6 +20,8 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
 use Exception;
 
+use Openpay\Data\OpenpayApiConnectionError;
+
 /**
  * Webhook class
  */
@@ -209,7 +211,10 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
             header('HTTP/1.1 200 OK');
 
-        } catch (\Exception $e) {
+        } catch (OpenpayApiConnectionError $e) {
+            $this->logger->error('#Webhook.openpay_cards OpenpayApiConnectionError (openpay->charges->get()', array('message' => $e->getMessage()));
+            $this->errorException($e->getCode(), $e->getMessage());
+        } catch (Exception $e) {
             $this->logger->error('#webhook-cards-exception', array('msg' => $e->getMessage(), 'code' => $e->getCode()));
             $this->errorException($e->getCode(), $e->getMessage());
         }
