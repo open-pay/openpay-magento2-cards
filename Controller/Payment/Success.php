@@ -12,6 +12,9 @@ use Magento\Framework\View\Result\PageFactory;
 use Openpay\Cards\Model\Payment as OpenpayPayment;
 use Magento\Sales\Model\ResourceModel\Order\Invoice\Collection as InvoiceCollection;
 use Magento\Sales\Model\Order\Invoice;
+
+use Openpay\Data\OpenpayApiConnectionError;
+
 /**
  * Webhook class
  */
@@ -213,6 +216,8 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->logger->debug('#SUCCESS', array('redirect' => 'checkout/onepage/success'));
             return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
 
+        } catch (OpenpayApiConnectionError $e) {
+            $this->logger->error('#SUCCESS OpenpayApiConnectionError (openpay->charges->get()', array('message' => $e->getMessage()));
         } catch (\Exception $e) {
             $this->logger->error('#SUCCESS', array('message' => $e->getMessage(), 'code' => $e->getCode(), 'line' => $e->getLine(), 'trace' => $e->getTraceAsString()));
             //throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
