@@ -463,6 +463,8 @@ class Payment extends Cc
         /** @var \Magento\Sales\Model\Order\Address $billing */
         $shipping = $order->getShippingAddress();
 
+        $origin_channel = "PLUGIN_MAGENTO";
+
         $capture = $this->getConfigData('payment_action') == 'authorize_capture' ? true : false;
         $token = $this->getInfoInstance()->getAdditionalInformation('openpay_token');
         $device_session_id = $this->getInfoInstance()->getAdditionalInformation('device_session_id');
@@ -502,7 +504,8 @@ class Payment extends Cc
             'source_id' => $token,
             'device_session_id' => $device_session_id,
             'customer' => $customer_data,
-            'capture' => $capture
+            'capture' => $capture,
+            'origin_channel' => $origin_channel
         );
 
             $charge_request['use_card_points'] = $use_card_points;
