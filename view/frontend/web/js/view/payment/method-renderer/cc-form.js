@@ -264,7 +264,17 @@ define(
                 var $form = $('#' + this.getCode() + '-form');
 
                 var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox === "0" ? false : true;
-                var useCardPoints = window.checkoutConfig.payment.use_card_points === "0" ? false : true;
+                if (isSandbox || isSandbox === "0") {
+                    isSandbox = true;
+                } else {
+                    isSandbox = false;
+                }
+                var useCardPoints = window.checkoutConfig.payment.use_card_points;
+                if (useCardPoints || useCardPoints === "0") {
+                    useCardPoints = true;
+                } else {
+                    useCardPoints = false;
+                }
                 OpenPay.setId(window.checkoutConfig.payment.openpay_credentials.merchant_id);
                 OpenPay.setApiKey(window.checkoutConfig.payment.openpay_credentials.public_key);
                 OpenPay.setSandboxMode(isSandbox);
