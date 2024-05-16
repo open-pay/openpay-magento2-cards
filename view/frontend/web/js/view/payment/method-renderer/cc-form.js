@@ -263,14 +263,14 @@ define(
                 var self = this;
                 var $form = $('#' + this.getCode() + '-form');
 
-                var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox === "0" ? false : true;
-                if (isSandbox || isSandbox === "0") {
+                var isSandbox = window.checkoutConfig.payment.openpay_credentials.is_sandbox;
+                if (isSandbox || isSandbox === "1") {
                     isSandbox = true;
                 } else {
                     isSandbox = false;
                 }
                 var useCardPoints = window.checkoutConfig.payment.use_card_points;
-                if (useCardPoints || useCardPoints === "0") {
+                if (useCardPoints || useCardPoints === "1") {
                     useCardPoints = true;
                 } else {
                     useCardPoints = false;
