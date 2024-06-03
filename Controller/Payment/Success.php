@@ -148,7 +148,6 @@ class Success extends \Magento\Framework\App\Action\Action
             }
 
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
-            $this->orderSender->send($order, true);
 
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);
