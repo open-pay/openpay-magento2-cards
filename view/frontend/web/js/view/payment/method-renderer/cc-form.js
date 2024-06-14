@@ -334,8 +334,9 @@ define(
                         },
                         function(response) {
                             console.log("token error");
+                            console.log(response.data.description)
                             self.messageContainer.addErrorMessage({
-                                message: response.data.description
+                                message: "La petición no pudo ser procesada"
                             });
                         }
                     );
