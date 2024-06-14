@@ -983,12 +983,15 @@ class Payment extends Cc
 
     public function validateSettings() {
         $supportedCurrencies = $this->supported_currency_codes;
-
-        if (!$this->currencyUtils->isSupportedCurrentCurrency($supportedCurrencies)) {
-            $currenciesAsString = implode(', ', $supportedCurrencies);
-            throw new \Magento\Framework\Validator\Exception(__('The '. $this->currencyUtils->getCurrentCurrency() .' currency is not suported, the supported currencies are: ' . $currenciesAsString));
+        if($this->is_active){
+            if (!$this->currencyUtils->isSupportedCurrentCurrency($supportedCurrencies)) {
+                $currenciesAsString = implode(', ', $supportedCurrencies);
+                throw new \Magento\Framework\Validator\Exception(__('The '. $this->currencyUtils->getCurrentCurrency() .' currency is not suported, the supported currencies are: ' . $currenciesAsString));
+            }
+            return $this->getMerchantInfo();
+        }else{
+            return true;
         }
-        return $this->getMerchantInfo();
     }
 
     public function getCode() {
@@ -1124,11 +1127,17 @@ class Payment extends Cc
      */
     public function createWebhook() {
         $this->logger->debug('#payment.createWebhook', Array());
+        if($this->is_active){
         $openpay = $this->getOpenpayInstance();
         $base_url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
         $uri = $base_url."openpay/cards/webhook";
         $webhooks = $openpay->webhooks->getList([]);
         $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
+    }else{
+        $webhookCreated = (object) [
+            "url" => ""
+        ];
+    }
         if($webhookCreated){
             $this->logger->debug('#payment.createWebhook.isWebhookCreated', array('isWebhookCreated' => $webhookCreated->url) );
             return $webhookCreated;
