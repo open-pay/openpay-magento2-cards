@@ -249,6 +249,31 @@ class Payment extends Cc
     }
 
     /**
+     * Get Ip of client
+     */
+    public function getIpClient(){
+        // Recogemos la IP de la cabecera de la conexión
+        if (!empty($_SERVER['HTTP_CLIENT_IP']))
+        {
+            $ipAdress = $_SERVER['HTTP_CLIENT_IP'];
+            $this->logger->debug('#HTTP_CLIENT_IP', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP llega a través de un Proxy
+        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+        {
+            $ipAdress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $this->logger->debug('#HTTP_X_FORWARDED_FOR', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP lleva a través de la cabecera de conexión remota
+        else
+        {
+            $ipAdress = $_SERVER['REMOTE_ADDR'];
+            $this->logger->debug('#REMOTE_ADDR', array('$IP' => $ipAdress));
+        }
+        return $ipAdress;
+    }
+
+    /**
      * Validate payment method information object
      *
      * @return $this
@@ -958,7 +983,8 @@ class Payment extends Cc
     }
 
     public function getMerchantInfo() {
-        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+        $ipClient = $this->getIpClient();
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country, $ipClient);
         Openpay::setSandboxMode($this->is_sandbox);
         $classification = 'Openpay';
 
@@ -999,7 +1025,8 @@ class Payment extends Cc
     }
 
     public function getOpenpayInstance() {
-        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+        $ipClient = $this->getIpClient();
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country, $ipClient);
         Openpay::setSandboxMode($this->is_sandbox);
 
         $userAgent = "Openpay-MTO2".$this->country."/v2";
