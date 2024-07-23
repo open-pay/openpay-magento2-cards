@@ -21,9 +21,22 @@ class ChargeTypes
         return array(
             array('value' => 'direct', 'label' => 'Directo'),
             array('value' => 'auth', 'label' => 'Autenticación selectiva'),
-            array('value' => '3d', 'label' => '3D Secure')            
-        );     
+            array('value' => '3d', 'label' => '3D Secure')
+        );
     }
+
+    /**
+     * @return array
+     */
+    public function getTypesPe()
+    {
+        return array(
+            array('value' => 'direct', 'label' => 'Directo'),
+            array('value' => 'auth', 'label' => 'Autenticación selectiva'),
+            array('value' => '3d', 'label' => '3D Secure')
+        );
+    }
+
     public function getTypesCoPe()
     {
         return array(

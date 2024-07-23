@@ -211,7 +211,7 @@ class Payment extends Cc
                                         "18" => $this->getConfigData('eighteen_months')
         ) : null;
 
-        $this->charge_type = $this->country === "MX" ? $this->getConfigData('charge_type_mx') : $this->getConfigData('charge_type_co_pe');
+        $this->charge_type = $this->country === "MX" ? $this->getConfigData('charge_type_mx') : ($this->country === "PE" ? $this->getConfigData('charge_type_pe') : $this->getConfigData('charge_type_co_pe'));
 
         $this->affiliation_bbva = $this->getConfigData('affiliation_bbva');
 
