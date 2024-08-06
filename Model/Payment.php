@@ -590,7 +590,7 @@ class Payment extends Cc
             $payment->setCcExpMonth($charge->card->expiration_month);
             $payment->setCcExpYear($charge->card->expiration_year);
 
-            if ($this->charge_type == '3d') {
+            if ($this->charge_type == '3d' && $charge->payment_method->url) {
                 $status = $this->getCustomStatus('pending_payment');
                 $state = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
 
