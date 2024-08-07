@@ -270,6 +270,7 @@ class Payment extends Cc
             $ipAdress = $_SERVER['REMOTE_ADDR'];
             $this->logger->debug('#REMOTE_ADDR', array('$IP' => $ipAdress));
         }
+        $ipAdress = explode(",", $ipAdress) [0];
         return $ipAdress;
     }
 
