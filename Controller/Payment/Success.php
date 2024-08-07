@@ -124,6 +124,12 @@ class Success extends \Magento\Framework\App\Action\Action
             }
             $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
 
+            // Validation for 3DS
+            if ($order && ($order->getStatus() == "processing" || $order->getStatus() == 'completed')) {
+                $this->logger->debug('#Confimation Success', array('Notifications' => 'Success'));
+                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+            }
+
             if ($order && $charge->status == 'in_progress') {
                 $order->setState($status)->setStatus($status);
                 $order->addStatusHistoryComment("Preautorización realizada exitosamente");
@@ -148,6 +154,7 @@ class Success extends \Magento\Framework\App\Action\Action
             }
 
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
+            $this->orderSender->send($order, true);
 
             $order->setState($status)->setStatus($status);
             $order->setTotalPaid($charge->amount);
