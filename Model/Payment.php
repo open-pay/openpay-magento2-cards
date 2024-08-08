@@ -33,7 +33,7 @@ use Openpay\Cards\Model\Utils\Currency;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
 
-use Openpay\Data\Client as Openpay;
+use Openpay\Data\Openpay;
 use Openpay\Data\OpenpayApiTransactionError;
 use Openpay\Data\OpenpayApiConnectionError;
 
