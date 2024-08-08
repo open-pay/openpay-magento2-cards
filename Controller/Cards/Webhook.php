@@ -105,7 +105,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             if(!isset($order_id)) throw new Exception("The requested resource doesn't exist", 404);
 
             /*Magento Order validation 3DS*/
-            if(isset($json->transaction->payment_method)){
+            if(!isset($json->transaction->payment_method)){
                 $this->logger->debug('#webhook.process.3DS', array('Notifications' => 'Webhook Confirm'));
                 header('HTTP/1.1 200 OK');
                 exit;
