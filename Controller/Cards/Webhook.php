@@ -106,7 +106,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
             /*Magento Order validation 3DS*/
             if(!isset($json->transaction->payment_method)){
-                $this->logger->debug('#webhook.process.3DS', array('Notifications' => 'Webhook Confirm'));
+                $this->logger->debug('#webhook.direct.card', array('Notifications' => 'Direct Card Confirm'));
                 header('HTTP/1.1 200 OK');
                 exit;
             }
