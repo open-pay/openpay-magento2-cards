@@ -122,13 +122,7 @@ class Success extends \Magento\Framework\App\Action\Action
             } else {
                 $charge = $openpay->charges->get($this->request->getParam('id'));
             }
-            $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status));
-
-            // Validation for 3DS
-            if ($order && ($order->getStatus() == "processing" || $order->getStatus() == 'completed')) {
-                $this->logger->debug('#Confimation Success', array('Notifications' => 'Success'));
-                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
-            }
+            $this->logger->debug('#SUCCESS', array('id' => $this->request->getParam('id'), 'status' => $charge->status, 'order_status' => $order->getStatus()));
 
             if ($order && $charge->status == 'in_progress') {
                 $order->setState($status)->setStatus($status);
@@ -160,6 +154,13 @@ class Success extends \Magento\Framework\App\Action\Action
             $order->setTotalPaid($charge->amount);
             $order->setBaseTotalPaid($charge->amount);
             $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
+
+            // Validation for 3DS
+            if ($order && ($order->getStatus() == "processing" || $order->getStatus() == 'completed')) {
+                $this->logger->debug('#Confimation Success', array('Notifications' => 'Success'));
+                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+            }
+
             $order->save();
 
             $this->logger->debug('#success.order.save', array('order.state' => $order->getState(), 'order.status' => $order->getStatus(), 'order.base.total.paid' => $order->getBaseTotalPaid()));

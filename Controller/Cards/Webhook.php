@@ -89,6 +89,8 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $charge = $openpay->charges->get($json->transaction->id);
             $this->logger->debug("#Webhook.openpay_cards.ln:85 Openpay_Charge - " . json_encode($charge));
 
+            $this->logger->debug("#Webhook.openpay_cards.ln:85 Openpay_Charge_Transaction - " . json_encode($charge->transaction));
+
             /*Openpay Charge Validation*/
             if(!$charge) throw new Exception("Charge not found in Openpay merchant", 404);
 
@@ -111,13 +113,6 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 exit;
             }
 
-            /*Magento Order validation*/
-            if($order_status == 'processing' || $order_status == 'completed'){
-                $this->logger->debug('#webhook.process.cancelled', array('Magento.order.status' => 'processing || completed'));
-                header('HTTP/1.1 200 OK');
-                exit;
-            }
-
             /*IF transaction is only Authorization */
             if ($order && $charge->status == 'in_progress') {
                 $order->setState($status)->setStatus($status);
@@ -132,6 +127,16 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $order->setTotalPaid($charge->amount);
                 $order->setBaseTotalPaid($charge->amount);
                 $order->addStatusHistoryComment("Pago confirmado vía Webhook")->setIsCustomerNotified(true);
+
+                /*Magento Order validation*/
+                if($order_status == 'processing' || $order_status == 'completed'){
+                    $this->logger->debug('#webhook.process.cancelled', array('Magento.order.status' => 'processing || completed'));
+                    header('HTTP/1.1 200 OK');
+                    exit;
+                }
+
+                $this->logger->debug('#webhook.save.order', array('Magento.order.status' => $order_status));
+
                 $order->save();
 
                 $this->logger->debug('#webhook.order.save', array('order.state' => $order->getState(), 'order.status' => $order->getStatus(), 'order.base.total.paid' => $order->getBaseTotalPaid()));
