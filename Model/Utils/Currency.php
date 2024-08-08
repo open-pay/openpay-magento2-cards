@@ -3,6 +3,7 @@
 namespace Openpay\Cards\Model\Utils;
 
 use \Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\App\Request\Http;
 
 class Currency 
 {
@@ -10,9 +11,16 @@ class Currency
      * @var string
      */
     protected $currentCurrency;
+     /**
+     * @var request
+     */
+    protected $request;
+
     
-    public function __construct(StoreManagerInterface $storeManager) {
-        $this->currentCurrency = $storeManager->getStore()->getCurrentCurrency()->getCode();
+    public function __construct(StoreManagerInterface $storeManager, Http $request) {
+        $this->request = $request;
+        $website_id = (int) $this->request->getParam('website', 0);
+        $this->currentCurrency = $storeManager->getStore($website_id)->getCurrentCurrency()->getCode();
     }
 
 
