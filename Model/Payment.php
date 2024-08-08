@@ -34,7 +34,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session as CustomerSession;
 
-use Openpay\Data\Client as Openpay;
+use Openpay\Data\Openpay;
 use Openpay\Data\OpenpayApiTransactionError;
 use Openpay\Data\OpenpayApiConnectionError;
 
@@ -252,6 +252,32 @@ class Payment extends Cc
                 $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
             }
         }*/
+    }
+
+    /**
+     * Get Ip of client
+     */
+    public function getIpClient(){
+        // Recogemos la IP de la cabecera de la conexión
+        if (!empty($_SERVER['HTTP_CLIENT_IP']))
+        {
+            $ipAdress = $_SERVER['HTTP_CLIENT_IP'];
+            $this->logger->debug('#HTTP_CLIENT_IP', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP llega a través de un Proxy
+        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+        {
+            $ipAdress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $this->logger->debug('#HTTP_X_FORWARDED_FOR', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP lleva a través de la cabecera de conexión remota
+        else
+        {
+            $ipAdress = $_SERVER['REMOTE_ADDR'];
+            $this->logger->debug('#REMOTE_ADDR', array('$IP' => $ipAdress));
+        }
+        $ipAdress = explode(",", $ipAdress) [0];
+        return $ipAdress;
     }
 
     /**
@@ -963,8 +989,10 @@ class Payment extends Cc
         return $this->country;
     }
 
-    public function getMerchantClasification(){
-        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+    public function getMerchantInfo() {
+        $ipClient = $this->getIpClient();
+        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country, $ipClient);
+
         Openpay::setSandboxMode($this->is_sandbox);
         $classification = 'Openpay';
 
@@ -1021,6 +1049,8 @@ class Payment extends Cc
 
     public function getOpenpayInstance($merchant_id = null, $sk = null, $country = null, $is_sandbox = null) {
 
+        $ipClient = $this->getIpClient();
+
         if(is_null($merchant_id)){
             $merchant_id = $this->merchant_id;
         }
@@ -1036,10 +1066,8 @@ class Payment extends Cc
         if(is_null($is_sandbox)){
             $is_sandbox = $this->is_sandbox;
         }
-        
-        $is_sandbox = $this->is_sandbox;
 
-        $openpay = Openpay::getInstance($merchant_id,$sk,$country);
+        $openpay = Openpay::getInstance($merchant_id,$sk,$country, $ipClient);
         Openpay::setSandboxMode($is_sandbox);
         $userAgent = "Openpay-MTO2".$country."/v2";
         Openpay::setUserAgent($userAgent);
@@ -1165,6 +1193,7 @@ class Payment extends Cc
      */
     public function createWebhook() {
         $this->logger->debug('#payment.createWebhook', Array());
+
         $website_id = (int) $this->request->getParam('website', 0);
         $is_active = $this->scopeConfig->getValue("payment/openpay_cards/active",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
         $current_merchant_id = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
