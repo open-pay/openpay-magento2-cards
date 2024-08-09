@@ -222,7 +222,6 @@ class Payment extends Cc
         $this->request = $request;
 
         $classification = 'Openpay';
-        $this->logger->debug('#CLASSIFICATION: ', array('$order_id' => $classification ));
 
 
         $this->addressFormat = $addressFormat;
@@ -236,22 +235,7 @@ class Payment extends Cc
         $this->openpayRequest = $openpayRequest;
 
         $this->currencyUtils = $currencyUtils;
-        
 
-        /*if($this->merchant_classification === 'eglobal'){
-            if(empty($this->getConfigData('affiliation_bbva'))){
-                $this->charge_type = '3d';
-                $this->configWriter->save('payment/openpay_cards/charge_type', '3d');
-                throw new \Magento\Framework\Validator\Exception(__("The bbva affiliation field is required."));
-            }
-        }else{
-            if(!empty($this->getConfigData('affiliation_bbva'))){
-                $this->charge_type = 'direct';
-                $this->affiliation_bbva = '';
-                $this->configWriter->save('payment/openpay_cards/affiliation_bbva', '');
-                $this->configWriter->save('payment/openpay_cards/charge_type', 'direct');
-            }
-        }*/
     }
 
     /**
@@ -549,10 +533,6 @@ class Payment extends Cc
                 $charge_request['use_3d_secure'] = true;
                 $charge_request['redirect_url'] = $base_url.'openpay/payment/success';
             }
-
-        /*if($this->country === 'MX' && $this->merchant_classification == 'eglobal'){
-            $charge_request['affiliation_bbva'] = $this->affiliation_bbva;
-        }*/
 
         if ($this->country === 'CO') {
             $charge_request['iva'] = $this->iva;
@@ -989,57 +969,33 @@ class Payment extends Cc
         return $this->country;
     }
 
-    public function getMerchantInfo() {
-        $ipClient = $this->getIpClient();
-        $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country, $ipClient);
-
-        Openpay::setSandboxMode($this->is_sandbox);
-        $classification = 'Openpay';
-
-        if($this->is_active == "0"){
-            return;
-        }
-
-        if($this->country != "PE") {
-            try {
-                $merchantInfo = $openpay->getMerchantInfo();
-                $this->logger->debug('#order', array('$merchantInfo' => $merchantInfo));
-                return $merchantInfo->classification;
-            } catch (OpenpayApiConnectionError $e) {
-                $this->_logger->error('#getMerchantInfo OpenpayApiConnectionError (openpay->getMerchantInfo)', array('message' => $e->getMessage()));
-                return "Ocurrió un error interno. Intente más tarde.";
-            } catch (Exception $e) {
-                return $this->error($e);
-            }
-        }
-        return $classification;
+    public function getCurrentSiteOpenpayInstance(){
+        $website_id = (int) $this->request->getParam('website', 0);
+        $current_is_sandbox = $this->scopeConfig->getValue("payment/openpay_cards/is_sandbox",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        $current_sandbox_merchant_id = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        $current_live_merchant_id = $this->scopeConfig->getValue("payment/openpay_cards/live_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        $current_sandbox_sk = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_sk",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        $current_live_sk = $this->scopeConfig->getValue("payment/openpay_cards/live_sk",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        $current_country = $this->scopeConfig->getValue("payment/openpay_cards/country",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
+        
+        $current_merchant_id = $current_is_sandbox ? $current_sandbox_merchant_id : $current_live_merchant_id;
+        $current_sk = $current_is_sandbox ? $current_sandbox_sk : $current_live_sk;
+        
+        $openpay = $this->getOpenpayInstance($current_merchant_id,$current_sk,$current_country,$current_is_sandbox);
+        return $openpay;
     }
 
-    public function validateSettings() {
-       
-        $website_id = (int) $this->request->getParam('website', 0);
+    public function validateSettings() { 
+        $website_id = (int) $this->request->getParam('website', 0);  
         $is_active = $this->scopeConfig->getValue("payment/openpay_cards/active",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_merchant_id = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_sk = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_sk",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_country = $this->scopeConfig->getValue("payment/openpay_cards/country",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_is_sandbox = $this->scopeConfig->getValue("payment/openpay_cards/is_sandbox",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-            
-        $this->logger->debug( '#payment.validateSettings', array( 'is_active' => $is_active ) );
+        $this->logger->debug( '#payment.validateSettings', array( 'plugin_is_active' => $is_active ) );
         if($is_active){
+            $current_country = $this->scopeConfig->getValue("payment/openpay_cards/country",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
             $supportedCurrencies = $this->currencyUtils->getSupportedCurrenciesByCountryCode($current_country);
             if (!$this->currencyUtils->isSupportedCurrentCurrency($supportedCurrencies)) {
                 $currenciesAsString = implode(', ', $supportedCurrencies);
                 throw new \Magento\Framework\Validator\Exception(__('The '. $this->currencyUtils->getCurrentCurrency() .' currency is not suported, the supported currencies are: ' . $currenciesAsString));
             }
-
-            $openpay = Openpay::getInstance($current_merchant_id, $current_sk, $current_country);
-            Openpay::setSandboxMode($current_is_sandbox);
-            $website_id = (int) $this->request->getParam('website', 0);
-            $base_url = $this->_storeManager->getStore($website_id)->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
-            $this->logger->debug('#payment.validateSettings', array( 'Website Url' => $base_url ) );
-            $this->logger->debug('#payment.validateSettings', array( 'Config:Merchant_id' => $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id )));
-            $this->logger->debug( '#payment.validateSettings', array( 'Website ID' => $website_id ) );
-        return;
         }
     }
 
@@ -1192,21 +1148,14 @@ class Payment extends Cc
      * @return mixed
      */
     public function createWebhook() {
-        $this->logger->debug('#payment.createWebhook', Array());
-
         $website_id = (int) $this->request->getParam('website', 0);
         $is_active = $this->scopeConfig->getValue("payment/openpay_cards/active",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_merchant_id = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_sk = $this->scopeConfig->getValue("payment/openpay_cards/sandbox_sk",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_country = $this->scopeConfig->getValue("payment/openpay_cards/country",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-        $current_is_sandbox = $this->scopeConfig->getValue("payment/openpay_cards/is_sandbox",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id );
-         
+        $this->logger->debug('#payment.createWebhook', Array());
         if($is_active){
             $base_url = $this->_storeManager->getStore($website_id)->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
             $this->logger->debug('#payment.createWebhook', array( 'Website Url' => $base_url ) );
-            $this->logger->debug('#payment.createWebhook', array( 'Config:Merchant_id' => $this->scopeConfig->getValue("payment/openpay_cards/sandbox_merchant_id",\Magento\Store\Model\ScopeInterface::SCOPE_STORE,$website_id )));
             $this->logger->debug( '#payment.createWebhook', array( 'Website ID' => $website_id ) );
-            $openpay = Openpay::getInstance($current_merchant_id, $current_sk, $current_country);
+            $openpay = $this->getCurrentSiteOpenpayInstance();
             $uri = $base_url."openpay/cards/webhook";
             $webhooks = $openpay->webhooks->getList([]);
             $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
