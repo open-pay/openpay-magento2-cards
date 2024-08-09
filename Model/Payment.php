@@ -980,6 +980,8 @@ class Payment extends Cc
         
         $current_merchant_id = $current_is_sandbox ? $current_sandbox_merchant_id : $current_live_merchant_id;
         $current_sk = $current_is_sandbox ? $current_sandbox_sk : $current_live_sk;
+
+        $this->logger->debug( '#payment.getCurrentSiteOpenpayInstance', array( 'current_merchant_id' => $current_merchant_id ) );
         
         $openpay = $this->getOpenpayInstance($current_merchant_id,$current_sk,$current_country,$current_is_sandbox);
         return $openpay;
