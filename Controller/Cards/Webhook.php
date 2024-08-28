@@ -106,13 +106,6 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
             if(!isset($order_id)) throw new Exception("The requested resource doesn't exist", 404);
 
-            /*Magento Order validation 3DS*/
-            if(!isset($json->transaction->payment_method)){
-                $this->logger->debug('#webhook.direct.card', array('Notifications' => 'Direct Card Confirm'));
-                header('HTTP/1.1 200 OK');
-                exit;
-            }
-
             /*IF transaction is only Authorization */
             if ($order && $charge->status == 'in_progress') {
                 $order->setState($status)->setStatus($status);
