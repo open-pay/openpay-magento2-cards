@@ -260,7 +260,7 @@ class Payment extends Cc
             $ipAdress = $_SERVER['REMOTE_ADDR'];
             $this->logger->debug('#REMOTE_ADDR', array('$IP' => $ipAdress));
         }
-        $ipAdress = explode(",", $ipAdress) [0];
+        $ipAdress = version_compare(phpversion(), '8.1.0', '>=') ? explode(",", $ipAdress ?? '') [0] : explode(",", $ipAdress) [0];
         return $ipAdress;
     }
 
@@ -277,13 +277,13 @@ class Payment extends Cc
 
         switch ($this->country) {
             case "MX":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_mx'));
+                $availableTypes = version_compare(phpversion(), '8.1.0', '>=') ? explode(',', $this->getConfigData('cctypes_mx') ?? '') : explode(',', $this->getConfigData('cctypes_mx'));
             break;
             case "CO":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_co'));
+                $availableTypes = version_compare(phpversion(), '8.1.0', '>=') ? explode(',', $this->getConfigData('cctypes_co') ?? '') : explode(',', $this->getConfigData('cctypes_co'));
             break;
             case "PE":
-                $availableTypes = explode(',', $this->getConfigData('cctypes_pe'));
+                $availableTypes =  version_compare(phpversion(), '8.1.0', '>=') ? explode(',', $this->getConfigData('cctypes_pe') ?? ''): explode(',', $this->getConfigData('cctypes_pe'));
             break;
         }
 
