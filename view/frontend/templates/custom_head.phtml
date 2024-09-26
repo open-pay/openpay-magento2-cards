@@ -8,12 +8,12 @@
 ?>
 
 <?php if($country == 'MX') : ?>
-    <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js" src_type="url"></script>        
-    <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js" src_type="url"></script> 
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Mx/openpay.v1.min.js')?>" integrity="sha256-xqkgh3EIA2Ug01jFRTfeqJeSkIr/wMJ9Ue9ja9MgiRY=" crossorigin="anonymous"></script>
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Mx/openpay-data.v1.min.js')?>" integrity="sha256-lNn+aW4/PMmvkxNi+HN73RwzVnXOmost8t2KYBMu27E=" crossorigin="anonymous"></script>
 <?php elseif($country == 'CO'): ?>
-    <script src="https://resources.openpay.co/openpay.v1.min.js" src_type="url"></script>        
-    <script src="https://resources.openpay.co/openpay-data.v1.min.js" src_type="url"></script>
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Co/openpay.v1.min.js')?>" integrity="sha256-bcJSgwPGWOdKr7mw/WR/TwGseIpuSEgQsp3RY42u+G8=" crossorigin="anonymous"></script>
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Co/openpay-data.v1.min.js')?>" integrity="sha256-dhpa7dTfpf7AimV/WHoUB5MZDfopm51tNDx6kCo3vqw=" crossorigin="anonymous"></script>
 <?php elseif($country == 'PE'): ?>
-    <script src="https://js.openpay.pe/openpay.v1.min.js" src_type="url"></script>        
-    <script src="https://js.openpay.pe/openpay-data.v1.min.js" src_type="url"></script>
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Pe/openpay.v1.min.js')?>" integrity="sha256-f+lWbzX3hvee4w9ZaR01Y0Qkb42paHvTzishlGPOISY=" crossorigin="anonymous"></script>
+    <script src="<?=$this->getViewFileUrl('Openpay_Cards/js/openpaytokenize/Pe/openpay-data.v1.min.js')?>" integrity="sha256-tPh4qkzFDtRg7rwrgYqnm6YKQxScGFfXWnwu8hl59zM=" crossorigin="anonymous"></script>
 <?php endif; ?>
