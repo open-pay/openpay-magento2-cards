@@ -68,7 +68,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $json = json_decode($body);
             $openpay = $this->payment->getOpenpayInstance();
 
-            $this->logger->debug("#Webhook.openpay_cards.ln:66 json_input - " . json_encode($json));
+            $this->logger->debug("#Webhook.openpay_cards json_input - " . json_encode($json));
             if( (isset($json->type) && $json->type == "verification") || empty($json) || json_encode($json) == "{}"){
                 header('HTTP/1.1 200 OK');
                 return;
@@ -87,9 +87,9 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
             /*Openpay Charge request*/
             $charge = $openpay->charges->get($json->transaction->id);
-            $this->logger->debug("#Webhook.openpay_cards.ln:85 Openpay_Charge - " . json_encode($charge));
+            $this->logger->debug("#Webhook.openpay_cards Openpay_Charge - " . json_encode($charge));
 
-            $this->logger->debug("#Webhook.openpay_cards.ln:85 Openpay_Charge_Transaction - " . json_encode($charge->transaction));
+            $this->logger->debug("#Webhook.openpay_cards Openpay_Charge_Transaction - " . json_encode($charge->transaction));
 
             /*Openpay Charge Validation*/
             if(!$charge) throw new Exception("Charge not found in Openpay merchant", 404);
@@ -102,7 +102,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
             $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
 
             /*Logging Webhook data*/
-            $this->logger->debug('#Webhook.openpay_cards.ln:98', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
+            $this->logger->debug('#Webhook.openpay_cards', array('webhook.trx_id' => $json->transaction->id, 'webhook.type' => $json->type , 'charge.status' => $charge->status, 'order.status' => $order_status));
 
             if(!isset($order_id)) throw new Exception("The requested resource doesn't exist", 404);
 
@@ -188,7 +188,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $payment->save();
 
                 $this->logger->debug('#webhook.trx.succeeded.end', array('Magento.order.invoice' => 'saved' ) );
-            }else{
+            }else if( ($json->type == 'transaction.expired' && $charge->status == 'cancelled') || $charge->status == 'cancelled'){
                 $this->logger->debug('#webhook.trx.expired.start', array('webhook.type' => 'transaction.expired', 'openpay.charge.status' => 'expired' ));
 
                 $invoiceCollection = $order->getInvoiceCollection();
