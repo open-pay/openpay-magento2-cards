@@ -189,7 +189,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
 
                 $this->logger->debug('#webhook.trx.succeeded.end', array('Magento.order.invoice' => 'saved' ) );
             }else if( ($json->type == 'transaction.expired' && $charge->status == 'expired') || ($json->type == 'charge.cancelled' && $charge->status == 'cancelled') || ($json->type == 'charge.failed' && $charge->status == 'failed') ){
-                $this->logger->debug('#webhook.trx.expired.start', array('webhook.type' => 'transaction.expired', 'openpay.charge.status' => 'expired' ));
+                $this->logger->debug('#webhook.trx.not.completed.start', array('webhook.type' => $json->type, 'openpay.charge.status' => $charge->status ));
 
                 $invoiceCollection = $order->getInvoiceCollection();
                 if ( $invoiceCollection->count() > 0 ) {
@@ -211,7 +211,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                 $statusCanceled = $this->payment->getCustomStatus('canceled');
                 $order->setState($statusCanceled)->setStatus($statusCanceled);
                 $order->save();
-                $this->logger->debug('#webhook.trx.expired.end', array('Magento.order.invoice' => 'saved' ) );
+                $this->logger->debug('#webhook.trx.not.completed.end', array('Magento.order.invoice' => 'saved' ) );
             }
 
             header('HTTP/1.1 200 OK');
