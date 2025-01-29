@@ -408,7 +408,7 @@ define(
                 var address = {
                     city: customerData.city,
                     country_code: customerData.countryId,
-                    postal_code: customerData.postcode,
+                    postal_code: customerData.postcode.length < 13 ? customerData.postcode : customerData.postcode.substring(0, 12),
                     state: customerData.region,
                     line1: customerData.street[0],
                     line2: customerData.street[1]
