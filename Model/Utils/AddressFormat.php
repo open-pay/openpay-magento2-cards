@@ -13,9 +13,11 @@ class AddressFormat
             case 'PE':
                 $adressFormated = [
                     'city' => $address->getCity(),
-                    'state' => $address->getRegion(),
-                    'postal_code' => $address->getPostcode(),
+                    'state' => $address->getRegion()
                 ];
+                
+                $adressFormated['postal_code'] = strlen($address->getPostcode()) < 13 ? $address->getPostcode() : substr($address->getPostcode(),0,12);
+
                 if ($complete) {
                     $adressFormated['line1'] = $address->getStreetLine(1);
                     $adressFormated['line2'] = $address->getStreetLine(2);

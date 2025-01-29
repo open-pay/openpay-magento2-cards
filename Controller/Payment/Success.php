@@ -150,17 +150,16 @@ class Success extends \Magento\Framework\App\Action\Action
             $this->checkoutSession->setForceOrderMailSentOnSuccess(true);
             $this->orderSender->send($order, true);
 
-            $order->setState($status)->setStatus($status);
-            $order->setTotalPaid($charge->amount);
-            $order->setBaseTotalPaid($charge->amount);
-            $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
-
             // Validation for 3DS
             if ($order && ($order->getStatus() == "processing" || $order->getStatus() == 'completed')) {
                 $this->logger->debug('#Confimation Success', array('Notifications' => 'Success'));
                 return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
             }
 
+            $order->setState($status)->setStatus($status);
+            $order->setTotalPaid($charge->amount);
+            $order->setBaseTotalPaid($charge->amount);
+            $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
             $order->save();
 
             $this->logger->debug('#success.order.save', array('order.state' => $order->getState(), 'order.status' => $order->getStatus(), 'order.base.total.paid' => $order->getBaseTotalPaid()));
