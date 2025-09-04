@@ -11,13 +11,14 @@
 /*global define*/
 define(
     [
+        'knockout',
         'Magento_Payment/js/view/payment/cc-form',
         'jquery',
         'Magento_Checkout/js/model/quote',
         'Magento_Customer/js/model/customer',
         'Magento_Payment/js/model/credit-card-validation/validator'
     ],
-    function (Component, $, quote, customer) {
+    function (ko, Component, $, quote, customer) {
         'use strict';
 
         window.handleInstallmentsPE = function (installmentsToAdd) {
@@ -150,12 +151,31 @@ define(
                 template: 'Openpay_Cards/payment/openpay-form'
             },
 
+            initialize: function () {
+                this._super(); // Llama al initialize del padre
+                
+                // Definimos isShowIconsMX como un "computed observable"
+                this.isShowIconsMx = ko.computed(function () {
+                    const billingAddress = quote.billingAddress();
+                    if (billingAddress && billingAddress.countryId) {
+                        const countryId = billingAddress.countryId;
+                        return countryId === 'MX' || countryId === 'CO';
+                    }
+                    return false; // Default to false if no address is set
+                }, this);
+            },
+
             getCode: function() {
                 return 'openpay_cards';
             },
 
             isActive: function() {
                 return true;
+            },
+
+            getCardIconUrl: function(cardCode) {
+                // cardCode podría ser 'visa', 'mastercard', etc.
+                return require.toUrl('https://img.openpay.mx/plugins/' + cardCode + '.svg');
             },
 
             getMonthsInterestFree: function() {
