@@ -83,6 +83,27 @@
     }
 
     /*
+    * Selector correcto: Apunta al título dentro del contenedor del método de pago
+    */
+    .payment-method .payment-method-title {
+        display: flex;
+        align-items: center;
+    }
+
+    /*
+    * Contenedor de los íconos para agregar espaciado
+    */
+    .payment-icons-container {
+        margin-left: 15px; /* Ajusta este valor según el espacio que desees */
+    }
+
+    .payment-icon {
+        width: 40px;   /* Ajusta el ancho que desees */
+        height: 25px;  /* Ajusta el alto que desees */
+        object-fit: contain; /* Asegura que la imagen se escale bien dentro del espacio */
+    }
+
+    /*
         Ajustes responsive
     */
     @media screen and (min-width: 220px) and (max-width: 479px) {
@@ -143,7 +164,24 @@
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
         <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
+
+        <!-- ko if: isShowIconsMx() -->
+        <div class="payment-icons-container">
+             <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('visa') }" alt="Visa">
+             <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('mc_logo') }" alt="Mastercar">
+             <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('amex_logo') }" alt="American Express">
+        </div>
+        <!-- /ko -->
+
+        <!-- ko ifnot: isShowIconsMx() -->
+        <div class="payment-icons-container">
+            <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('visa') }" alt="Visa">
+            <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('mc_logo') }" alt="Mastercar">
+            <img class="payment-icon" data-bind="attr: { src: getCardIconUrl('amex_logo') }" alt="American Express">
+        </div>
+        <!-- /ko -->
     </div>
+
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
@@ -165,32 +203,7 @@
                     <span><!-- ko i18n: 'Credit Card Information'--><!-- /ko --></span>
                 </legend><br />
                 <!-- /ko -->
-                <div class="fieldset" id="tarjetas_aceptadas">
-                    <div class="field">
-                        <label for="tarjetas_aceptadas" class="label payment-method__space-height">Tarjetas Aceptadas</label>
-                        <ul class="payment-method__cards_accept">
-                            <!-- ko foreach: {data: getCcAvailableTypesValues(), as: 'item'} -->
-                            <li class="payment-method__cards_accept-list" >
-                                <!--ko if: $parent.getIcons(item.value) -->
-                                <img class="payment-method__cards_accept-img" data-bind="attr: {
-                                    'src': $parent.getIcons(item.value).url,
-                                    'alt': item.type,
-                                    'width': $parent.getIcons(item.value).width,
-                                    'height': $parent.getIcons(item.value).height
-                                    }">
-                                <!--/ko-->
-                            </li>
-                            <!--/ko-->
-                        </ul>
-                        <input type="hidden"
-                                name="payment[cc_type]"
-                                class="input-text"
-                                value=""
-                                data-bind="attr: {id: getCode() + '_cc_type', 'data-container': getCode() + '-cc-type'},
-                                value: creditCardType
-                                ">
-                    </div>
-                </div>
+                
                 <div class="field required" id="seleccionar_tarjeta">
                     <label for="seleccionar_tarjeta" class="label" data-bind="visible: existsOneCreditCard() && isLoggedIn()">Seleccionar tarjeta</label>
                     <div class="control">
@@ -200,10 +213,8 @@
                                 options: getCreditCardList(), optionsText: 'name', optionsValue: 'value'">
                         </select>
                     </div>
-                    
                 </div>
 
-                
                 <div class="field required" id="nombre_titular_tarjeta" data-bind="visible: notLogged()">
                     <label for="openpay_cards_cc_holder_name" class="label">
                         <span>Nombre del titular</span>
