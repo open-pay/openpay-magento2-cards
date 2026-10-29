@@ -290,7 +290,7 @@ define(
                     isSandbox = false;
                 }
                 var useCardPoints = window.checkoutConfig.payment.use_card_points;
-                if (useCardPoints || useCardPoints === "1") {
+                if (useCardPoints === "1") {
                     useCardPoints = true;
                 } else {
                     useCardPoints = false;
