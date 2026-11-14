@@ -932,7 +932,7 @@ class Payment extends Cc
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
      * @return bool
      */
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null): bool
+    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null): bool
     {
         return parent::isAvailable($quote);
     }
